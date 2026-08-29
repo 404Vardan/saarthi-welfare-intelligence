@@ -1,0 +1,93 @@
+/* CSS Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--font-body);
+  color: var(--ink-navy);
+  background: var(--paper);
+}
+
+body {
+  padding-top: 28px; /* account for academic banner */
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Typography Utilities */
+.font-display { font-family: var(--font-display); }
+.font-mono { font-family: var(--font-mono); }
+.text-xs { font-size: var(--text-xs); }
+.text-sm { font-size: var(--text-sm); }
+.text-base { font-size: var(--text-base); }
+.text-lg { font-size: var(--text-lg); }
+.text-xl { font-size: var(--text-xl); }
+.text-2xl { font-size: var(--text-2xl); }
+.text-3xl { font-size: var(--text-3xl); }
+.text-4xl { font-size: var(--text-4xl); }
+.text-5xl { font-size: var(--text-5xl); }
+
+/* Color Utilities */
+.text-slate { color: var(--slate); }
+.text-vermillion { color: var(--seal-vermillion); }
+.text-green { color: var(--ledger-green); }
+.text-amber { color: var(--amber); }
+.text-gold { color: var(--brass-gold); }
+.text-white { color: var(--white); }
+
+/* Selection */
+::selection {
+  background: var(--seal-vermillion);
+  color: var(--white);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--paper);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ink-navy);
+  border-radius: var(--radius-sm);
+}
+
+/* Focus Styles */
+:focus-visible {
+  outline: 2px solid var(--seal-vermillion);
+  outline-offset: 2px;
+}
+
+/* Links */
+a {
+  color: var(--seal-vermillion);
+  text-decoration: none;
+  transition: color 200ms ease;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* Academic Banner */
+.academic-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: var(--ink-navy);
+  color: var(--paper);
+  text-align: center;
+  padding: 6px;
+  font-size: var(--text-xs);
+  z-index: 9999;
+}
+
+/* Global Transitions */
+button, a, input, select, textarea, .card, .badge, .form-input, .sidebar-nav-item {
+  transition: all 200ms ease;
+}

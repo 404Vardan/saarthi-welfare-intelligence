@@ -1,0 +1,641 @@
+/* ========================================================
+   SAARTHI DESIGN SYSTEM — CORE SHARED COMPONENTS
+   ======================================================== */
+
+/* ========================================================
+   1. SHELL & SIDEBAR NAVIGATION (CITIZEN & GOVERNMENT)
+   ======================================================== */
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--paper);
+}
+
+.sidebar {
+  width: 270px;
+  background-color: #FAF9F5;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 2px 0 8px rgba(11, 31, 58, 0.03);
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 20px 16px 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.brand-seal-mark {
+  width: 32px;
+  height: 32px;
+  background: var(--ink-navy);
+  color: var(--paper);
+  border: 1.5px solid var(--brass-gold);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  box-shadow: 0 2px 4px rgba(11, 31, 58, 0.15);
+  flex-shrink: 0;
+}
+
+.brand-name {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ink-navy);
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+}
+
+.brand-tagline {
+  font-size: 0.7rem;
+  color: var(--slate);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-top: 2px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 12px;
+  flex: 1;
+}
+
+.sidebar-section-title {
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 14px 10px 4px 10px;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--slate);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  border-left: 2px solid transparent;
+}
+
+.sidebar-link:hover {
+  background: var(--paper-hover);
+  color: var(--ink-navy);
+}
+
+.sidebar-link.active {
+  background: rgba(193, 68, 45, 0.08);
+  color: var(--seal-vermillion);
+  border-left-color: var(--seal-vermillion);
+  font-weight: 600;
+}
+
+.sidebar-link.active svg {
+  color: var(--seal-vermillion);
+}
+
+.sidebar-user {
+  margin-top: auto;
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  background: #F4F2EB;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--ink-navy);
+}
+
+.user-role {
+  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  color: var(--brass-gold);
+  margin-top: 1px;
+}
+
+.main-content {
+  flex: 1;
+  padding: 32px 40px;
+  overflow-y: auto;
+  max-height: 100vh;
+  background-color: var(--paper);
+}
+
+/* ========================================================
+   2. GOVERNMENT CONSOLE SHELL
+   ======================================================== */
+
+.gov-shell {
+  display: flex;
+  min-height: 100vh;
+  background-color: #0B192C;
+}
+
+.gov-sidebar {
+  width: 270px;
+  background-color: #071220;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.gov-sidebar .brand-name { color: #FFFFFF; }
+.gov-sidebar .brand-tagline { color: var(--brass-gold); }
+
+.gov-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 12px;
+  flex: 1;
+}
+
+.gov-section-title {
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 14px 10px 4px 10px;
+}
+
+.gov-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  border-left: 2px solid transparent;
+}
+
+.gov-nav-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: #FFFFFF;
+}
+
+.gov-nav-link.active {
+  background: rgba(166, 135, 61, 0.15);
+  color: var(--brass-gold);
+  border-left-color: var(--brass-gold);
+  font-weight: 600;
+}
+
+.gov-content {
+  flex: 1;
+  padding: 32px 40px;
+  overflow-y: auto;
+  max-height: 100vh;
+  background-color: #0B192C;
+  color: #FFFFFF;
+}
+
+/* ========================================================
+   3. BUTTONS & CHIPS (STANDARDIZED)
+   ======================================================== */
+
+.btn {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  transition: all 0.15s ease;
+  line-height: 1.25;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background-color: var(--seal-vermillion);
+  color: #FFFFFF;
+  border-color: var(--seal-vermillion);
+  box-shadow: 0 1px 3px rgba(193, 68, 45, 0.25);
+}
+.btn-primary:hover {
+  background-color: var(--seal-hover);
+  border-color: var(--seal-hover);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  border: 1px solid var(--ink-navy);
+  color: var(--ink-navy);
+}
+.btn-secondary:hover {
+  background-color: var(--ink-navy);
+  color: #FFFFFF;
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid var(--border);
+  color: var(--slate);
+}
+.btn-outline:hover {
+  border-color: var(--ink-navy);
+  color: var(--ink-navy);
+  background: var(--paper-hover);
+}
+
+.btn-success {
+  background-color: var(--ledger-green);
+  color: #FFFFFF;
+  border-color: var(--ledger-green);
+}
+.btn-success:hover {
+  background-color: var(--ledger-hover);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: var(--text-xs);
+}
+
+.btn-lg {
+  padding: 12px 24px;
+  font-size: var(--text-base);
+}
+
+.btn-icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
+.filter-chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--paper);
+  color: var(--ink-navy);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-chip:hover {
+  background: var(--paper-dark);
+}
+
+.filter-chip.active {
+  background: var(--ink-navy);
+  color: #FFFFFF;
+  border-color: var(--ink-navy);
+}
+
+/* ========================================================
+   4. CARDS & PANELS (DOSSIER & RECORD AESTHETICS)
+   ======================================================== */
+
+.card {
+  background: #FFFDF8;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.stat-card {
+  background: #FFFDF8;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 18px 20px;
+  box-shadow: var(--shadow-sm);
+  border-top: 3px solid var(--ink-navy);
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-card .stat-value {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  margin-bottom: 2px;
+  color: var(--ink-navy);
+}
+
+.stat-card .stat-label {
+  font-size: var(--text-xs);
+  color: var(--slate);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+/* ========================================================
+   5. FORM CONTROLS (STANDARDIZED)
+   ======================================================== */
+
+.form-group {
+  margin-bottom: var(--space-4);
+}
+
+.form-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: var(--text-xs);
+  color: var(--ink-navy);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  background: #FFFFFF;
+  color: var(--ink-navy);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--seal-vermillion);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(193, 68, 45, 0.12);
+}
+
+.form-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--seal-vermillion);
+  cursor: pointer;
+}
+
+.slider-control {
+  width: 100%;
+  accent-color: var(--brass-gold);
+  cursor: pointer;
+}
+
+/* ========================================================
+   6. BADGES & STATUS INDICATORS
+   ======================================================== */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: var(--radius-xs);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.badge-eligible {
+  background: rgba(31, 122, 77, 0.12);
+  color: var(--ledger-green);
+  border: 1px solid rgba(31, 122, 77, 0.3);
+}
+
+.badge-nearly {
+  background: rgba(166, 135, 61, 0.12);
+  color: var(--brass-gold);
+  border: 1px solid rgba(166, 135, 61, 0.3);
+}
+
+.badge-not-eligible {
+  background: rgba(193, 68, 45, 0.1);
+  color: var(--seal-vermillion);
+  border: 1px solid rgba(193, 68, 45, 0.25);
+}
+
+.badge-pending {
+  background: rgba(85, 96, 110, 0.12);
+  color: var(--slate);
+  border: 1px solid var(--border);
+}
+
+/* ========================================================
+   7. STAMPS (OFFICIAL GAZETTE EMBOSSED SEALS)
+   ======================================================== */
+
+.stamp {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 11px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  position: relative;
+  transform: rotate(-3deg);
+  padding: var(--space-2);
+}
+
+.stamp-eligible {
+  border: 3px solid var(--ledger-green);
+  color: var(--ledger-green);
+  box-shadow: inset 0 0 0 3px rgba(31, 122, 77, 0.15);
+}
+
+.stamp-nearly {
+  border: 2.5px dashed var(--brass-gold);
+  color: var(--brass-gold);
+  opacity: 0.9;
+}
+
+/* ========================================================
+   8. TABLES & DATA LEDGERS
+   ======================================================== */
+
+.table, .table-ledger {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.table th, .table-ledger th {
+  background: var(--paper-dark);
+  color: var(--ink-navy);
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid var(--border);
+}
+
+.table td, .table-ledger td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink-navy);
+}
+
+.table tr:hover td, .table-ledger tr:hover td {
+  background: rgba(11, 31, 58, 0.02);
+}
+
+/* ========================================================
+   9. TIMELINE & MILESTONES
+   ======================================================== */
+
+.timeline {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  margin: 1.5rem 0 0.5rem 0;
+  padding: 0 10px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 20px;
+  right: 20px;
+  height: 2px;
+  background: var(--border);
+  z-index: 1;
+}
+
+.timeline-item {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  max-width: 140px;
+}
+
+.timeline-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  border: 2px solid var(--border);
+  margin: 0 auto 8px auto;
+  transition: all 0.2s;
+}
+
+.timeline-dot.active {
+  background: var(--ledger-green);
+  border-color: var(--ledger-green);
+  box-shadow: 0 0 0 3px rgba(31, 122, 77, 0.2);
+}
+
+.timeline-dot.pending {
+  background: var(--brass-gold);
+  border-color: var(--brass-gold);
+}
+
+.timeline-ref {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--slate);
+  margin-top: 2px;
+}
+
+/* ========================================================
+   10. PAGE HEADERS & STRUCTURE
+   ======================================================== */
+
+.page-header {
+  margin-bottom: 1.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: 1.65rem;
+  color: var(--ink-navy);
+  margin: 0;
+}
+
+.page-description {
+  font-size: 0.875rem;
+  color: var(--slate);
+  margin-top: 4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .app-shell, .gov-shell {
+    flex-direction: column;
+  }
+  .sidebar, .gov-sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+  }
+  .main-content, .gov-content {
+    padding: 20px 16px;
+    max-height: none;
+  }
+}

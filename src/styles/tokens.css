@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Core Saarthi Color Palette ("The Living Government Ledger") */
+  --ink-navy: #0B1F3A;
+  --ink-light: #152E52;
+  --ink-dark: #071426;
+  
+  --seal-vermillion: #C1442D;
+  --seal-hover: #A83622;
+  --seal-subtle: rgba(193, 68, 45, 0.12);
+  
+  --brass-gold: #A6873D;
+  --brass-light: #C4A252;
+  --brass-subtle: rgba(166, 135, 61, 0.15);
+  
+  --ledger-green: #1F7A4D;
+  --ledger-hover: #17613C;
+  --ledger-subtle: rgba(31, 122, 77, 0.12);
+  
+  --paper: #F2F0E6;
+  --paper-dark: #E6E3D5;
+  --paper-card: #FAF9F3;
+  --paper-hover: #ECEADF;
+  --paper-border: #D8D5C5;
+  
+  --slate: #55606E;
+  --slate-light: #7A8696;
+  --slate-dark: #374151;
+  
+  --amber: #C4841D;
+  --error-red: #9B2C2C;
+  --border: #D1CFC4;
+  --border-light: rgba(11, 31, 58, 0.08);
+  --border-dark: rgba(255, 255, 255, 0.12);
+  --white: #FFFFFF;
+
+  /* Typography */
+  --font-display: 'Source Serif 4', Georgia, serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+
+  /* Font Sizes */
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.25rem;    /* 20px */
+  --text-2xl: 1.5rem;    /* 24px */
+  --text-3xl: 1.875rem;  /* 30px */
+  --text-4xl: 2.25rem;   /* 36px */
+  --text-5xl: 3rem;      /* 48px */
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Border Radii */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* Shadows (Restrained Document & Ledger Depth) */
+  --shadow-sm: 0 1px 3px rgba(11, 31, 58, 0.06), 0 1px 2px rgba(11, 31, 58, 0.04);
+  --shadow-md: 0 4px 12px rgba(11, 31, 58, 0.08), 0 1px 3px rgba(11, 31, 58, 0.04);
+  --shadow-lg: 0 12px 28px rgba(11, 31, 58, 0.12), 0 4px 8px rgba(11, 31, 58, 0.06);
+  --shadow-dossier: 0 8px 24px rgba(11, 31, 58, 0.09), 0 2px 4px rgba(11, 31, 58, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}

@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 700">
+  <defs>
+    <style>
+      .state { fill: var(--ink-light, #1A3254); stroke: var(--border, #D1CFC4); stroke-width: 1; cursor: pointer; transition: fill 0.3s; }
+      .state:hover { fill: var(--slate, #55606E); }
+    </style>
+  </defs>
+  <!-- Simplified representation of 10 Indian states -->
+  <path id="uttar-pradesh" class="state" d="M300,200 L350,220 L360,280 L300,300 L250,250 Z" />
+  <text x="305" y="250" fill="white" font-size="12" pointer-events="none">UP</text>
+  
+  <path id="madhya-pradesh" class="state" d="M250,280 L360,280 L380,350 L280,380 L230,320 Z" />
+  <text x="290" y="330" fill="white" font-size="12" pointer-events="none">MP</text>
+  
+  <path id="rajasthan" class="state" d="M150,200 L250,220 L240,300 L160,320 L120,260 Z" />
+  <text x="170" y="260" fill="white" font-size="12" pointer-events="none">RJ</text>
+  
+  <path id="maharashtra" class="state" d="M180,340 L280,340 L300,420 L200,450 L150,380 Z" />
+  <text x="220" y="390" fill="white" font-size="12" pointer-events="none">MH</text>
+  
+  <path id="bihar" class="state" d="M370,230 L430,230 L440,280 L380,300 Z" />
+  <text x="390" y="270" fill="white" font-size="12" pointer-events="none">BR</text>
+  
+  <path id="west-bengal" class="state" d="M430,250 L480,260 L460,350 L410,340 Z" />
+  <text x="430" y="310" fill="white" font-size="12" pointer-events="none">WB</text>
+  
+  <path id="odisha" class="state" d="M360,350 L420,330 L430,400 L350,420 Z" />
+  <text x="375" y="380" fill="white" font-size="12" pointer-events="none">OD</text>
+  
+  <path id="karnataka" class="state" d="M200,430 L280,420 L300,520 L220,550 Z" />
+  <text x="240" y="480" fill="white" font-size="12" pointer-events="none">KA</text>
+  
+  <path id="tamil-nadu" class="state" d="M260,520 L320,490 L330,590 L260,620 Z" />
+  <text x="280" y="560" fill="white" font-size="12" pointer-events="none">TN</text>
+  
+  <path id="kerala" class="state" d="M230,530 L270,520 L280,610 L230,580 Z" />
+  <text x="240" y="560" fill="white" font-size="10" pointer-events="none">KL</text>
+</svg>

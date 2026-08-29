@@ -1,0 +1,172 @@
+/* ========================================================
+   CITIZEN PORTAL — SPECIFIC VIEW STYLES
+   ======================================================== */
+
+/* ACTION PLAN */
+.action-plan {
+  background: #FFFDF8;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+}
+
+.action-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.action-item:last-child {
+  border-bottom: none;
+}
+
+/* PROFILE FORM */
+.profile-form {
+  max-width: 800px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px 24px;
+}
+.profile-form .form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+/* RECOMMENDATIONS & RULE BREAKDOWNS */
+.eligibility-section {
+  margin-bottom: var(--space-8);
+}
+.eligibility-section h3 {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--ink-navy);
+  margin-bottom: var(--space-4);
+  border-bottom: 2px solid var(--border);
+  padding-bottom: var(--space-2);
+}
+
+.eligibility-card {
+  position: relative;
+  overflow: hidden;
+  border-left: 4px solid var(--ledger-green);
+}
+
+.rule-breakdown {
+  margin-top: 14px;
+  background: var(--paper-dark);
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.rule-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--text-xs);
+  padding: 8px 0;
+  border-bottom: 1px dotted var(--border);
+}
+.rule-item:last-child {
+  border-bottom: none;
+}
+
+/* DOCUMENT VAULT */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-md);
+  padding: 36px 20px;
+  text-align: center;
+  background: #FFFDF8;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+.upload-zone:hover {
+  border-color: var(--seal-vermillion);
+  background: var(--paper-hover);
+}
+
+.document-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.document-card {
+  background: #FFFDF8;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.document-icon {
+  color: var(--brass-gold);
+  flex-shrink: 0;
+}
+
+/* ASSISTANT FULL VIEW */
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 180px);
+  background: #FFFDF8;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.chat-message {
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+.chat-message.user {
+  align-self: flex-end;
+  background: var(--ink-navy);
+  color: #FFFFFF;
+  border-bottom-right-radius: 2px;
+}
+.chat-message.ai {
+  align-self: flex-start;
+  background: var(--paper);
+  color: var(--ink-navy);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 2px;
+}
+
+.chat-input-area {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-top: 1px solid var(--border);
+  background: var(--paper);
+}
+
+/* APPLICATION CARD */
+.application-card {
+  border-left: 4px solid var(--brass-gold);
+}
+
+@media (max-width: 768px) {
+  .profile-form {
+    grid-template-columns: 1fr;
+  }
+}

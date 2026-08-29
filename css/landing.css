@@ -1,0 +1,1260 @@
+/* ============================================================
+   SAARTHI LANDING PAGE — Verified Ledger Aesthetic
+   ============================================================
+   Color Palette:
+   - Paper: #F2F0E6
+   - Paper Dark / Card: #E8E4D8 / #FFFFFF
+   - Ink Navy: #0B1F3A
+   - Seal Vermillion: #C1442D
+   - Ledger Green: #1F7A4D
+   - Brass Gold: #A6873D
+   - Slate: #55606E
+   ============================================================ */
+
+/* Academic Banner */
+.academic-banner {
+  background: var(--amber);
+  color: #000;
+  text-align: center;
+  padding: 8px 16px;
+  font-weight: 500;
+  font-size: 13px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+/* Header & Navbar */
+.landing-header {
+  position: sticky;
+  top: 36px;
+  width: 100%;
+  background: rgba(242, 240, 230, 0.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  z-index: 900;
+}
+
+.landing-nav-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--ink-navy);
+}
+
+.brand-seal-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--seal-vermillion);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,0.4);
+}
+
+.brand-text-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+
+.brand-subtitle {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--brass-gold);
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.nav-link {
+  color: var(--ink-navy);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.15s;
+}
+
+.nav-link:hover {
+  color: var(--seal-vermillion);
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-nav-primary {
+  background: var(--seal-vermillion);
+  color: white;
+  text-decoration: none;
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.btn-nav-primary:hover {
+  background: #a83621;
+  transform: translateY(-1px);
+}
+
+.btn-nav-outline {
+  background: transparent;
+  color: var(--ink-navy);
+  border: 1px solid var(--ink-navy);
+  text-decoration: none;
+  padding: 9px 16px;
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.btn-nav-outline:hover {
+  background: rgba(11, 31, 58, 0.06);
+}
+
+/* ============================================================
+   HERO SECTION — Paper Rhythm (#F2F0E6)
+   ============================================================ */
+.hero-wrapper {
+  background: var(--paper);
+  padding: 64px 24px 80px 24px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 48px;
+  align-items: center;
+}
+
+/* Left Hero Typography */
+.hero-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-main-title {
+  font-family: var(--font-display);
+  font-size: 60px;
+  line-height: 1.12;
+  font-weight: 600;
+  color: var(--ink-navy);
+  margin: 0 0 24px 0;
+  letter-spacing: -0.5px;
+}
+
+.hero-support-text {
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--slate);
+  margin: 0 0 32px 0;
+  max-width: 620px;
+}
+
+.hero-cta-strip {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 36px;
+  flex-wrap: wrap;
+}
+
+.btn-hero-primary {
+  background: var(--seal-vermillion);
+  color: white;
+  padding: 16px 32px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 16px;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(193, 68, 45, 0.25);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-hero-primary:hover {
+  background: #a83621;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(193, 68, 45, 0.35);
+}
+
+.btn-hero-secondary {
+  background: white;
+  color: var(--ink-navy);
+  border: 1px solid var(--border);
+  padding: 15px 28px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 16px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.btn-hero-secondary:hover {
+  background: var(--paper-hover);
+  border-color: var(--ink-navy);
+}
+
+/* Metric Strip Underneath */
+.hero-metrics-strip {
+  display: flex;
+  gap: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+
+.hero-metric-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-metric-num {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink-navy);
+}
+
+.hero-metric-label {
+  font-size: 13px;
+  color: var(--slate);
+  margin-top: 2px;
+}
+
+.hero-coverage-note {
+  font-size: 12px;
+  color: var(--slate);
+  opacity: 0.8;
+  font-style: italic;
+}
+
+/* Interactive Prompt Box */
+.hero-interactive-box {
+  margin-top: 28px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.hero-interactive-header {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--brass-gold);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hero-prompt-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.prompt-chip {
+  background: var(--paper);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  color: var(--ink-navy);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.prompt-chip:hover, .prompt-chip.active {
+  background: var(--ink-navy);
+  color: white;
+  border-color: var(--ink-navy);
+}
+
+.hero-prompt-result {
+  background: var(--paper-hover);
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-size: 13px;
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.hero-prompt-result.visible {
+  display: block;
+}
+
+/* ============================================================
+   RIGHT HERO — The Physical Welfare Ledger Card
+   ============================================================ */
+.hero-ledger-card {
+  background: #FFFDF9;
+  border: 2px solid #D6D0C2;
+  border-radius: 8px;
+  box-shadow: 0 16px 36px rgba(11, 31, 58, 0.08), 0 2px 6px rgba(0,0,0,0.04);
+  padding: 28px;
+  position: relative;
+  font-family: var(--font-body);
+}
+
+.hero-ledger-card::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  border: 1px solid #EAE5D8;
+  pointer-events: none;
+}
+
+.ledger-card-header {
+  border-bottom: 2px solid var(--ink-navy);
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.ledger-card-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--ink-navy);
+}
+
+.ledger-reg-id {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--brass-gold);
+  font-weight: 600;
+}
+
+.ledger-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--slate);
+  margin-bottom: 8px;
+}
+
+.ledger-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  background: var(--paper);
+  padding: 12px 14px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.ledger-field-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--slate);
+  letter-spacing: 0.5px;
+}
+
+.ledger-field-val {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-navy);
+  margin-top: 2px;
+}
+
+.ledger-schemes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.ledger-scheme-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  transition: border-color 0.2s;
+}
+
+.ledger-scheme-row:hover {
+  border-color: var(--brass-gold);
+}
+
+.ledger-scheme-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--ink-navy);
+}
+
+.ledger-scheme-benefit {
+  font-size: 12px;
+  color: var(--slate);
+}
+
+.ledger-scheme-match {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ledger-green);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Verified Stamp */
+.ledger-verified-stamp {
+  position: absolute;
+  bottom: 24px;
+  right: 28px;
+  width: 96px;
+  height: 96px;
+  border: 3px solid var(--ledger-green);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--ledger-green);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-transform: uppercase;
+  transform: rotate(-12deg);
+  opacity: 0.85;
+  box-shadow: inset 0 0 0 2px var(--ledger-green);
+  background: rgba(31, 122, 77, 0.03);
+  animation: stampHit 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+}
+
+.stamp-text-small {
+  font-size: 8px;
+  letter-spacing: 1px;
+}
+
+.stamp-text-large {
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  margin: 1px 0;
+}
+
+@keyframes stampHit {
+  0% { transform: scale(3) rotate(-35deg); opacity: 0; }
+  100% { transform: scale(1) rotate(-12deg); opacity: 0.85; }
+}
+
+/* ============================================================
+   TRUST STRIP — Clean Philosophy
+   ============================================================ */
+.trust-strip-section {
+  background: white;
+  border-bottom: 1px solid var(--border);
+  padding: 32px 24px;
+}
+
+.trust-strip-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.trust-strip-headline {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--slate);
+  margin-bottom: 24px;
+}
+
+.trust-pillars-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+}
+
+.trust-pillar-card {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  background: var(--paper);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--brass-gold);
+}
+
+.trust-pillar-label {
+  font-size: 13px;
+  color: var(--slate);
+  margin-bottom: 4px;
+}
+
+.trust-pillar-value {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink-navy);
+}
+
+/* ============================================================
+   PROBLEM SECTION — Paper Rhythm (#F2F0E6)
+   ============================================================ */
+.problem-story-section {
+  background: var(--paper);
+  padding: 100px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.problem-story-inner {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.story-heading {
+  font-family: var(--font-display);
+  font-size: 46px;
+  line-height: 1.18;
+  color: var(--ink-navy);
+  margin: 0 0 36px 0;
+  text-align: center;
+}
+
+.story-narrative-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 40px;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 48px;
+}
+
+.story-text {
+  font-size: 18px;
+  line-height: 1.7;
+  color: var(--slate);
+  margin-bottom: 24px;
+}
+
+.story-text strong {
+  color: var(--ink-navy);
+}
+
+/* Visual Tree */
+.story-tree-visual {
+  background: var(--paper);
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  padding: 24px;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--ink-navy);
+}
+
+.tree-root {
+  font-weight: 700;
+  color: var(--seal-vermillion);
+}
+
+.tree-highlight {
+  font-weight: 600;
+}
+
+.statement-callout {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 600;
+  color: var(--seal-vermillion);
+  margin: 48px 0 0 0;
+  line-height: 1.25;
+}
+
+/* ============================================================
+   HOW SAARTHI WORKS — 4 Editorial Steps
+   ============================================================ */
+.how-it-works-section {
+  background: white;
+  padding: 100px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-editorial-header {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto 64px auto;
+}
+
+.section-eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--brass-gold);
+  margin-bottom: 12px;
+}
+
+.section-main-heading {
+  font-family: var(--font-display);
+  font-size: 42px;
+  color: var(--ink-navy);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.steps-four-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.step-editorial-card {
+  padding: 32px 24px;
+  background: var(--paper);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: transform 0.2s;
+}
+
+.step-editorial-card:hover {
+  transform: translateY(-4px);
+}
+
+.step-num-large {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--seal-vermillion);
+  margin-bottom: 16px;
+}
+
+.step-title-edit {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink-navy);
+  margin: 0 0 12px 0;
+}
+
+.step-desc-edit {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--slate);
+  margin: 0;
+}
+
+/* ============================================================
+   WHY SAARTHI? — Large Editorial Panels
+   ============================================================ */
+.editorial-panels-section {
+  background: var(--paper);
+  padding: 100px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panels-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.editorial-panel {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 48px;
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 48px;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.panel-title {
+  font-family: var(--font-display);
+  font-size: 36px;
+  color: var(--ink-navy);
+  margin: 0 0 16px 0;
+}
+
+.panel-desc {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--slate);
+  margin: 0;
+}
+
+.panel-visual-box {
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 28px;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--ink-navy);
+}
+
+.checklist-item:last-child {
+  border-bottom: none;
+}
+
+.checklist-check {
+  color: var(--ledger-green);
+  font-weight: 700;
+}
+
+/* ============================================================
+   WELFARE GRAPH SECTION — Navy Rhythm (#0B1F3A)
+   ============================================================ */
+.welfare-graph-section {
+  background: var(--ink-navy);
+  color: white;
+  padding: 100px 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.welfare-graph-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.graph-heading {
+  font-family: var(--font-display);
+  font-size: 44px;
+  margin: 0 0 16px 0;
+  text-align: center;
+  color: white;
+}
+
+.graph-subtext {
+  font-size: 17px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  max-width: 760px;
+  margin: 0 auto 48px auto;
+}
+
+.graph-persona-bar {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 36px;
+  flex-wrap: wrap;
+}
+
+.graph-persona-btn {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: white;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.graph-persona-btn.active, .graph-persona-btn:hover {
+  background: var(--brass-gold);
+  border-color: var(--brass-gold);
+  color: var(--ink-navy);
+  font-weight: 600;
+}
+
+.graph-canvas-container {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  padding: 40px;
+  min-height: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.interactive-graph-nodes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  width: 100%;
+}
+
+.graph-node-center {
+  background: #1A3254;
+  border: 2px solid var(--brass-gold);
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+  box-shadow: 0 0 24px rgba(166, 135, 61, 0.25);
+}
+
+.graph-branches-row {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.graph-leaf-node {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 6px;
+  padding: 14px 20px;
+  width: 220px;
+  text-align: center;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.graph-leaf-node:hover, .graph-leaf-node.highlighted {
+  background: rgba(31, 122, 77, 0.2);
+  border-color: var(--ledger-green);
+  transform: translateY(-2px);
+}
+
+.graph-leaf-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: white;
+  margin-bottom: 4px;
+}
+
+.graph-leaf-benefit {
+  font-size: 12px;
+  color: var(--brass-gold);
+  font-family: var(--font-mono);
+}
+
+/* ============================================================
+   GOVERNMENT SECTION — Navy Rhythm
+   ============================================================ */
+.gov-gap-section {
+  background: #071529;
+  color: white;
+  padding: 100px 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.gov-gap-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.gov-main-heading {
+  font-family: var(--font-display);
+  font-size: 46px;
+  line-height: 1.15;
+  color: white;
+  text-align: center;
+  margin: 0 0 56px 0;
+}
+
+.gov-gap-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
+  align-items: center;
+}
+
+.gov-metrics-panel {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 32px;
+}
+
+.gov-metric-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  font-size: 15px;
+}
+
+.gov-metric-row:last-child {
+  border-bottom: none;
+}
+
+.gov-metric-num {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.gov-reasons-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gov-reason-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gov-reason-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: rgba(255,255,255,0.8);
+}
+
+.gov-reason-bar-bg {
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  height: 12px;
+  overflow: hidden;
+}
+
+.gov-reason-bar-fill {
+  background: var(--seal-vermillion);
+  height: 100%;
+  border-radius: 4px;
+}
+
+/* ============================================================
+   POLICY SIMULATION — Paper Rhythm (#F2F0E6)
+   ============================================================ */
+.policy-sim-section {
+  background: var(--paper);
+  padding: 100px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.policy-sim-inner {
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.policy-sim-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 40px;
+  box-shadow: var(--shadow-sm);
+}
+
+.sim-slider-container {
+  margin: 32px 0 40px 0;
+}
+
+.sim-slider-labels {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--slate);
+  margin-top: 8px;
+}
+
+.sim-slider {
+  width: 100%;
+  height: 8px;
+  background: var(--paper-dark);
+  border-radius: 4px;
+  outline: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.sim-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--seal-vermillion);
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+.sim-results-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  background: var(--paper);
+  padding: 24px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.sim-result-val {
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--seal-vermillion);
+  margin-bottom: 4px;
+}
+
+.sim-result-label {
+  font-size: 12px;
+  color: var(--slate);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ============================================================
+   TRUST & VERIFICATION PHILOSOPHY — Paper Rhythm
+   ============================================================ */
+.trust-philosophy-section {
+  background: white;
+  padding: 100px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.trust-phil-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.trust-columns-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.trust-col-card {
+  padding: 36px 28px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--paper);
+}
+
+.trust-badge-large {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 15px;
+  padding: 6px 14px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.badge-verified-style {
+  background: rgba(31, 122, 77, 0.12);
+  color: var(--ledger-green);
+  border: 1px solid var(--ledger-green);
+}
+
+.badge-ai-style {
+  background: rgba(166, 135, 61, 0.15);
+  color: var(--brass-gold);
+  border: 1px solid var(--brass-gold);
+}
+
+.badge-synthetic-style {
+  background: rgba(85, 96, 110, 0.12);
+  color: var(--slate);
+  border: 1px solid var(--slate);
+}
+
+.trust-col-desc {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--slate);
+  margin: 0;
+}
+
+/* ============================================================
+   FINAL CALL TO ACTION — Paper Rhythm
+   ============================================================ */
+.final-cta-section {
+  background: var(--paper);
+  padding: 120px 24px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.final-cta-inner {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.final-cta-headline {
+  font-family: var(--font-display);
+  font-size: 48px;
+  line-height: 1.15;
+  color: var(--ink-navy);
+  margin: 0 0 36px 0;
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.site-footer {
+  background: var(--ink-navy);
+  color: rgba(255,255,255,0.7);
+  padding: 80px 24px 40px 24px;
+}
+
+.footer-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.footer-top-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 48px;
+  padding-bottom: 48px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.footer-col-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: white;
+  margin-bottom: 16px;
+}
+
+.footer-link-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.footer-link-list a {
+  color: rgba(255,255,255,0.6);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.15s;
+}
+
+.footer-link-list a:hover {
+  color: white;
+}
+
+.footer-bottom-bar {
+  padding-top: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: rgba(255,255,255,0.4);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .hero-inner {
+    grid-template-columns: 1fr;
+  }
+  .hero-main-title {
+    font-size: 46px;
+  }
+  .steps-four-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .editorial-panel {
+    grid-template-columns: 1fr;
+  }
+  .trust-pillars-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .gov-gap-grid {
+    grid-template-columns: 1fr;
+  }
+  .footer-top-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-main-title {
+    font-size: 36px;
+  }
+  .nav-links {
+    display: none;
+  }
+  .steps-four-grid {
+    grid-template-columns: 1fr;
+  }
+  .trust-columns-grid {
+    grid-template-columns: 1fr;
+  }
+  .sim-results-grid {
+    grid-template-columns: 1fr;
+  }
+  .footer-bottom-bar {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+}
