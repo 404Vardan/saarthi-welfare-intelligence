@@ -1,167 +1,445 @@
 /**
- * Saarthi Deterministic Eligibility Engine
- * Evaluates citizen profile & household against date-aware structured scheme rules.
- * Produces transparent explainable breakdowns, match %, and future projections.
+ * Saarthi Deterministic Eligibility & Welfare Intelligence Engine
+ * 
+ * Features:
+ * 1. Composable AST-based Rule Evaluator (AND, OR, NOT, dynamic predicates).
+ * 2. Deep Context Resolution (citizen profile, household graph, verified documents).
+ * 3. Transparent Explainability Traces ("Why am I seeing this?").
+ * 4. Tolerance & Near-Miss Detection (e.g., income marginally above ceiling, age within delta).
+ * 5. Document Blocker Identification.
+ * 6. Household Entitlement Aggregation & Portfolio Optimization.
  */
 
+export const ASTOperators = {
+  EQ: (a, b) => a === b,
+  NEQ: (a, b) => a !== b,
+  GT: (a, b) => Number(a) > Number(b),
+  GTE: (a, b) => Number(a) >= Number(b),
+  LT: (a, b) => Number(a) < Number(b),
+  LTE: (a, b) => Number(a) <= Number(b),
+  IN: (a, b) => (Array.isArray(b) ? b.includes(a) : b === a),
+  NOT_IN: (a, b) => (Array.isArray(b) ? !b.includes(a) : b !== a),
+  CONTAINS: (a, b) => (Array.isArray(a) ? a.includes(b) : String(a).toLowerCase().includes(String(b).toLowerCase())),
+  BETWEEN: (a, b) => Array.isArray(b) && Number(a) >= Number(b[0]) && Number(a) <= Number(b[1])
+};
+
 export const EligibilityEngine = {
-  computeHouseholdIncome(profile, householdMembers = []) {
-    let total = profile.income_annual || 0;
-    householdMembers.forEach(m => {
-      total += (m.income_annual || 0);
+  /**
+   * Resolves a dotted field path from context
+   * Context shape: { citizen, household, documents, meta }
+   */
+  resolveField(context, path) {
+    if (!path) return undefined;
+    const parts = path.split('.');
+    let current = context;
+    for (const part of parts) {
+      if (current === null || current === undefined) return undefined;
+      current = current[part];
+    }
+    return current;
+  },
+
+  /**
+   * Computes household aggregate income
+   */
+  computeHouseholdIncome(citizen, householdMembers = []) {
+    let total = Number(citizen?.income_annual || 0);
+    (householdMembers || []).forEach(m => {
+      total += Number(m.income_annual || 0);
     });
     return total;
   },
 
-  checkRule(profile, householdMembers = [], ruleName, ruleValue, rules = {}) {
-    const hm = householdMembers || [];
+  /**
+   * Evaluates a single rule node against context
+   */
+  evaluateNode(node, context) {
+    // 1. AST Combinator Node (AND / OR / NOT)
+    if (node.combinator) {
+      const combinator = node.combinator.toUpperCase();
+      const children = (node.rules || []).map(child => this.evaluateNode(child, context));
 
-    switch (ruleName) {
-      case 'income_limit': {
-        const incomeType = rules.income_type || 'individual';
-        const income = incomeType === 'household'
-          ? this.computeHouseholdIncome(profile, hm)
-          : (profile.income_annual || 0);
-        const passed = income <= ruleValue;
-        const margin = passed ? 0 : ((income - ruleValue) / ruleValue * 100);
+      if (combinator === 'AND') {
+        const passed = children.every(c => c.passed);
         return {
+          type: 'group',
+          combinator: 'AND',
+          label: node.label || 'All Conditions Must Be Met',
           passed,
-          citizenValue: `₹${income.toLocaleString('en-IN')}`,
-          requiredValue: `≤ ₹${ruleValue.toLocaleString('en-IN')}`,
-          label: `${incomeType === 'household' ? 'Household' : 'Individual'} Income`,
-          nearMiss: !passed && margin <= 20
+          children
         };
       }
-      case 'min_age': {
-        const age = profile.age || 0;
+
+      if (combinator === 'OR') {
+        const passed = children.some(c => c.passed);
         return {
-          passed: age >= ruleValue,
-          citizenValue: `${age} years`,
-          requiredValue: `≥ ${ruleValue} years`,
-          label: 'Minimum Age',
-          nearMiss: !passed && (ruleValue - age) <= 2
-        };
-      }
-      case 'max_age': {
-        const age = profile.age || 0;
-        return {
-          passed: age <= ruleValue,
-          citizenValue: `${age} years`,
-          requiredValue: `≤ ${ruleValue} years`,
-          label: 'Maximum Age',
-          nearMiss: !passed && (age - ruleValue) <= 2
-        };
-      }
-      case 'gender':
-        return {
-          passed: Array.isArray(ruleValue) ? ruleValue.includes(profile.gender) : profile.gender === ruleValue,
-          citizenValue: profile.gender ? profile.gender.toUpperCase() : 'Not specified',
-          requiredValue: Array.isArray(ruleValue) ? ruleValue.map(g => g.toUpperCase()).join(' / ') : String(ruleValue).toUpperCase(),
-          label: 'Gender'
-        };
-      case 'category':
-        return {
-          passed: Array.isArray(ruleValue) ? ruleValue.includes(profile.category) : profile.category === ruleValue,
-          citizenValue: profile.category ? profile.category.toUpperCase() : 'General',
-          requiredValue: Array.isArray(ruleValue) ? ruleValue.map(c => c.toUpperCase()).join(', ') : String(ruleValue).toUpperCase(),
-          label: 'Social Category'
-        };
-      case 'occupation':
-        return {
-          passed: Array.isArray(ruleValue) ? ruleValue.includes(profile.occupation) : profile.occupation === ruleValue,
-          citizenValue: profile.occupation ? profile.occupation.replace(/_/g, ' ') : 'Not set',
-          requiredValue: Array.isArray(ruleValue) ? ruleValue.map(o => o.replace(/_/g, ' ')).join(', ') : String(ruleValue),
-          label: 'Occupation'
-        };
-      case 'area_type':
-        return {
-          passed: Array.isArray(ruleValue) ? ruleValue.includes(profile.area_type) : profile.area_type === ruleValue,
-          citizenValue: profile.area_type || 'Rural',
-          requiredValue: Array.isArray(ruleValue) ? ruleValue.join(', ') : String(ruleValue),
-          label: 'Area Type'
-        };
-      case 'land_ownership':
-        return {
-          passed: Array.isArray(ruleValue) ? ruleValue.includes(profile.land_ownership) : profile.land_ownership === ruleValue,
-          citizenValue: profile.land_ownership ? profile.land_ownership.replace(/_/g, ' ') : 'none',
-          requiredValue: Array.isArray(ruleValue) ? ruleValue.map(l => l.replace(/_/g, ' ')).join(', ') : String(ruleValue),
-          label: 'Land Ownership'
-        };
-      case 'house_ownership':
-        return {
-          passed: Array.isArray(ruleValue) ? ruleValue.includes(profile.house_ownership) : profile.house_ownership === ruleValue,
-          citizenValue: profile.house_ownership || 'kuccha',
-          requiredValue: Array.isArray(ruleValue) ? ruleValue.join(', ') : String(ruleValue),
-          label: 'House Ownership'
-        };
-      case 'bpl_required':
-        return {
-          passed: !ruleValue || profile.bpl_card === true,
-          citizenValue: profile.bpl_card ? 'Yes (BPL Card)' : 'No',
-          requiredValue: 'BPL Card Mandatory',
-          label: 'BPL Status'
-        };
-      case 'bank_account_required':
-        return {
-          passed: !ruleValue || profile.bank_account !== false,
-          citizenValue: profile.bank_account !== false ? 'Active & DBT Linked' : 'No Account',
-          requiredValue: 'Active Bank Account',
-          label: 'DBT Bank Account'
-        };
-      case 'education': {
-        const citizenEd = profile.education || 'none';
-        const passed = Array.isArray(ruleValue) ? ruleValue.includes(citizenEd) : citizenEd === ruleValue;
-        return {
+          type: 'group',
+          combinator: 'OR',
+          label: node.label || 'At Least One Condition Must Be Met',
           passed,
-          citizenValue: citizenEd.replace(/_/g, ' '),
-          requiredValue: Array.isArray(ruleValue) ? ruleValue.map(e => e.replace(/_/g, ' ')).join(', ') : String(ruleValue),
-          label: 'Education Qualification'
+          children
         };
       }
-      default:
-        return { passed: true, citizenValue: 'N/A', requiredValue: 'N/A', label: ruleName };
+
+      if (combinator === 'NOT') {
+        const child = children[0] || { passed: false };
+        return {
+          type: 'group',
+          combinator: 'NOT',
+          label: node.label || 'Condition Must Not Be Met',
+          passed: !child.passed,
+          children
+        };
+      }
     }
+
+    // 2. Leaf Predicate Node
+    const { field, op = 'EQ', value: targetValue, label, impact = 'critical', tolerance = 0 } = node;
+    const citizenValue = this.resolveField(context, field);
+
+    let passed = false;
+    let nearMiss = false;
+    let delta = null;
+
+    const opKey = String(op).toUpperCase();
+    const evaluator = ASTOperators[opKey] || ASTOperators.EQ;
+
+    if (evaluator) {
+      passed = evaluator(citizenValue, targetValue);
+    }
+
+    // Near-miss detection for numerical boundaries (income, age, land)
+    if (!passed && typeof citizenValue === 'number' && typeof targetValue === 'number') {
+      if (['LTE', 'LT'].includes(opKey)) {
+        const diff = citizenValue - targetValue;
+        const allowableDelta = tolerance || targetValue * 0.15; // 15% tolerance default
+        if (diff > 0 && diff <= allowableDelta) {
+          nearMiss = true;
+          delta = `Exceeds by ${diff}`;
+        }
+      } else if (['GTE', 'GT'].includes(opKey)) {
+        const diff = targetValue - citizenValue;
+        const allowableDelta = tolerance || 2; // e.g. 2 years age
+        if (diff > 0 && diff <= allowableDelta) {
+          nearMiss = true;
+          delta = `Short by ${diff}`;
+        }
+      }
+    }
+
+    return {
+      type: 'predicate',
+      field,
+      op: opKey,
+      label: label || this.formatFieldLabel(field),
+      impact,
+      passed: Boolean(passed),
+      nearMiss,
+      delta,
+      citizenValue: this.formatValue(field, citizenValue),
+      requiredValue: this.formatRequirement(opKey, targetValue),
+      rawCitizenValue: citizenValue,
+      rawTargetValue: targetValue
+    };
   },
 
-  generateRuleBreakdown(profile, householdMembers, rules) {
-    const breakdown = [];
-    const skipKeys = ['income_type', 'custom_rules'];
+  /**
+   * Helper to format human-friendly field labels
+   */
+  formatFieldLabel(field) {
+    if (!field) return 'Condition';
+    const clean = field.replace(/^(citizen|household)\./, '');
+    const map = {
+      income_annual: 'Annual Income',
+      'household.income_annual': 'Household Income',
+      age: 'Citizen Age',
+      gender: 'Gender',
+      category: 'Social Category',
+      occupation: 'Occupation',
+      land_ownership: 'Land Ownership',
+      house_ownership: 'House Ownership',
+      area_type: 'Area Classification',
+      state: 'Domicile State',
+      bpl_card: 'BPL Card Status',
+      bank_account: 'DBT Bank Account',
+      education: 'Education Level'
+    };
+    return map[clean] || clean.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  },
 
-    for (const [key, val] of Object.entries(rules)) {
-      if (skipKeys.includes(key)) continue;
-      if (val === null || val === undefined) continue;
+  /**
+   * Formats citizen values with Indian currency & units
+   */
+  formatValue(field, val) {
+    if (val === undefined || val === null) return 'Not Provided';
+    if (typeof val === 'boolean') return val ? 'Yes' : 'No';
+    if (field.includes('income')) return `₹${Number(val).toLocaleString('en-IN')}`;
+    if (field.includes('age')) return `${val} years`;
+    if (Array.isArray(val)) return val.map(v => String(v).toUpperCase()).join(', ');
+    return String(val).replace(/_/g, ' ').toUpperCase();
+  },
 
-      const res = this.checkRule(profile, householdMembers, key, val, rules);
+  /**
+   * Formats required rule thresholds into clear statements
+   */
+  formatRequirement(op, target) {
+    const symbolMap = {
+      EQ: '=',
+      NEQ: '≠',
+      GT: '>',
+      GTE: '≥',
+      LT: '<',
+      LTE: '≤',
+      IN: 'One of',
+      NOT_IN: 'None of',
+      CONTAINS: 'Must contain'
+    };
+    const sym = symbolMap[op] || '';
+    if (Array.isArray(target)) {
+      return `${sym} [${target.map(t => String(t).toUpperCase()).join(', ')}]`;
+    }
+    if (typeof target === 'number' && target > 1000) {
+      return `${sym} ₹${target.toLocaleString('en-IN')}`;
+    }
+    if (typeof target === 'boolean') {
+      return target ? 'Required' : 'Not Required';
+    }
+    return `${sym} ${String(target).toUpperCase()}`;
+  },
 
-      let impact = 'moderate';
-      if (['income_limit', 'min_age', 'max_age', 'occupation', 'category', 'bpl_required'].includes(key)) {
-        impact = 'critical';
-      }
+  /**
+   * Converts legacy scheme flat rules into AST schema seamlessly
+   */
+  convertLegacyRulesToAST(rules = {}) {
+    const subRules = [];
+    const incomeType = rules.income_type || 'individual';
 
-      breakdown.push({
-        rule: res.label || key,
-        ruleKey: key,
-        status: res.passed ? 'passed' : 'failed',
-        citizenValue: res.citizenValue,
-        requiredValue: res.requiredValue,
-        impact,
-        nearMiss: res.nearMiss || false
+    if (rules.income_limit !== undefined && rules.income_limit !== null) {
+      subRules.push({
+        field: incomeType === 'household' ? 'household.income_annual' : 'citizen.income_annual',
+        op: 'LTE',
+        value: Number(rules.income_limit),
+        label: `${incomeType === 'household' ? 'Household' : 'Individual'} Income Limit`,
+        impact: 'critical'
       });
     }
-    return breakdown;
+
+    if (rules.min_age !== undefined && rules.min_age !== null) {
+      subRules.push({
+        field: 'citizen.age',
+        op: 'GTE',
+        value: Number(rules.min_age),
+        label: 'Minimum Age Requirement',
+        impact: 'critical',
+        tolerance: 2
+      });
+    }
+
+    if (rules.max_age !== undefined && rules.max_age !== null) {
+      subRules.push({
+        field: 'citizen.age',
+        op: 'LTE',
+        value: Number(rules.max_age),
+        label: 'Maximum Age Requirement',
+        impact: 'critical',
+        tolerance: 2
+      });
+    }
+
+    if (rules.gender) {
+      subRules.push({
+        field: 'citizen.gender',
+        op: Array.isArray(rules.gender) ? 'IN' : 'EQ',
+        value: rules.gender,
+        label: 'Gender Eligibility',
+        impact: 'critical'
+      });
+    }
+
+    if (rules.category) {
+      subRules.push({
+        field: 'citizen.category',
+        op: Array.isArray(rules.category) ? 'IN' : 'EQ',
+        value: rules.category,
+        label: 'Social Category',
+        impact: 'critical'
+      });
+    }
+
+    if (rules.occupation) {
+      subRules.push({
+        field: 'citizen.occupation',
+        op: Array.isArray(rules.occupation) ? 'IN' : 'EQ',
+        value: rules.occupation,
+        label: 'Occupation Status',
+        impact: 'critical'
+      });
+    }
+
+    if (rules.state) {
+      subRules.push({
+        field: 'citizen.state',
+        op: Array.isArray(rules.state) ? 'IN' : 'EQ',
+        value: rules.state,
+        label: 'Domicile / State Requirement',
+        impact: 'critical'
+      });
+    }
+
+    if (rules.area_type) {
+      subRules.push({
+        field: 'citizen.area_type',
+        op: Array.isArray(rules.area_type) ? 'IN' : 'EQ',
+        value: rules.area_type,
+        label: 'Area Classification',
+        impact: 'moderate'
+      });
+    }
+
+    if (rules.land_ownership) {
+      subRules.push({
+        field: 'citizen.land_ownership',
+        op: Array.isArray(rules.land_ownership) ? 'IN' : 'EQ',
+        value: rules.land_ownership,
+        label: 'Land Holding Capacity',
+        impact: 'critical'
+      });
+    }
+
+    if (rules.house_ownership) {
+      subRules.push({
+        field: 'citizen.house_ownership',
+        op: Array.isArray(rules.house_ownership) ? 'IN' : 'EQ',
+        value: rules.house_ownership,
+        label: 'Housing Condition',
+        impact: 'moderate'
+      });
+    }
+
+    if (rules.bpl_required) {
+      subRules.push({
+        field: 'citizen.bpl_card',
+        op: 'EQ',
+        value: true,
+        label: 'BPL / Antyodaya Ration Status',
+        impact: 'critical'
+      });
+    }
+
+    if (rules.bank_account_required) {
+      subRules.push({
+        field: 'citizen.bank_account',
+        op: 'NEQ',
+        value: false,
+        label: 'Active DBT Bank Account',
+        impact: 'critical'
+      });
+    }
+
+    if (rules.education) {
+      subRules.push({
+        field: 'citizen.education',
+        op: Array.isArray(rules.education) ? 'IN' : 'EQ',
+        value: rules.education,
+        label: 'Educational Attainment',
+        impact: 'moderate'
+      });
+    }
+
+    return {
+      combinator: 'AND',
+      label: 'Standard Eligibility Ruleset',
+      rules: subRules
+    };
   },
 
-  evaluateScheme(profile, householdMembers, scheme) {
-    const rules = scheme.rules || {};
-    const breakdown = this.generateRuleBreakdown(profile, householdMembers, rules);
+  /**
+   * Flattens AST breakdown for simple UI display & table rendering
+   */
+  flattenBreakdown(node) {
+    const list = [];
+    if (node.type === 'predicate') {
+      list.push({
+        rule: node.label,
+        field: node.field,
+        status: node.passed ? 'passed' : 'failed',
+        citizenValue: node.citizenValue,
+        requiredValue: node.requiredValue,
+        impact: node.impact,
+        nearMiss: node.nearMiss,
+        delta: node.delta
+      });
+    } else if (node.children) {
+      node.children.forEach(child => {
+        list.push(...this.flattenBreakdown(child));
+      });
+    }
+    return list;
+  },
 
+  /**
+   * Evaluates citizen documents against scheme requirements
+   */
+  evaluateDocuments(citizenDocuments = [], schemeDocuments = []) {
+    const normUserDocs = (citizenDocuments || []).map(d => (typeof d === 'string' ? d : d.name || '').toLowerCase());
+    const required = schemeDocuments || [];
+
+    const docStatus = required.map(docName => {
+      const docLower = String(docName).toLowerCase();
+      const isAvailable = normUserDocs.some(u => u.includes(docLower) || docLower.includes(u));
+      return {
+        name: docName,
+        available: isAvailable,
+        status: isAvailable ? 'available' : 'missing'
+      };
+    });
+
+    const missingCount = docStatus.filter(d => !d.available).length;
+    return {
+      allAvailable: missingCount === 0,
+      missingCount,
+      totalRequired: required.length,
+      docStatus
+    };
+  },
+
+  /**
+   * Evaluates a full Scheme against a Citizen Profile + Household + Documents Context
+   */
+  evaluateScheme(citizen = {}, householdMembers = [], scheme = {}, citizenDocuments = []) {
+    const context = {
+      citizen: {
+        ...citizen,
+        income_annual: Number(citizen?.income_annual || 0),
+        age: Number(citizen?.age || 0)
+      },
+      household: {
+        income_annual: this.computeHouseholdIncome(citizen, householdMembers),
+        membersCount: (householdMembers || []).length + 1,
+        members: householdMembers || []
+      },
+      documents: citizenDocuments || []
+    };
+
+    // Obtain or construct AST
+    const ast = scheme.ast_rules || (scheme.rules ? this.convertLegacyRulesToAST(scheme.rules) : null);
+
+    let astResult = null;
+    let flatBreakdown = [];
+
+    if (ast && ast.rules && ast.rules.length > 0) {
+      astResult = this.evaluateNode(ast, context);
+      flatBreakdown = this.flattenBreakdown(astResult);
+    }
+
+    // Compute weights & match percentage
     let totalWeight = 0;
     let passedWeight = 0;
     let criticalFails = 0;
     let moderateFails = 0;
     let hasNearMiss = false;
 
-    breakdown.forEach(b => {
+    flatBreakdown.forEach(b => {
       const weight = b.impact === 'critical' ? 2 : 1;
       totalWeight += weight;
       if (b.status === 'passed') {
@@ -173,6 +451,10 @@ export const EligibilityEngine = {
       }
     });
 
+    // Check Documents
+    const docEval = this.evaluateDocuments(citizenDocuments, scheme.documents || scheme.required_documents || []);
+
+    // Determine Final Status
     let status = 'eligible';
     const totalFails = criticalFails + moderateFails;
 
@@ -198,23 +480,85 @@ export const EligibilityEngine = {
       schemeName: scheme.name || scheme.official_name,
       schemeShortName: scheme.short_name,
       benefit: scheme.benefit || scheme.benefits_summary,
-      benefitAmount: scheme.benefit_amount,
+      benefitAmount: scheme.benefit_amount || scheme.benefit,
       type: scheme.type || scheme.scheme_type,
-      govLevel: scheme.gov_level,
+      govLevel: scheme.gov_level || scheme.government_level,
       ministry: scheme.ministry,
-      documents: scheme.documents || scheme.required_documents || [],
+      department: scheme.department,
       status,
       matchPercentage,
-      ruleBreakdown: breakdown,
-      ruleVersion: scheme.rule_version || '1.0',
-      ruleEffectiveFrom: scheme.rule_effective_from || '2025-01-01',
-      lastVerifiedAt: scheme.last_verified_at || '2026-08-28T00:00:00Z'
+      ruleBreakdown: flatBreakdown,
+      astResult,
+      documents: docEval.docStatus,
+      missingDocumentsCount: docEval.missingCount,
+      allDocumentsReady: docEval.allAvailable,
+      ruleVersion: scheme.rule_version || '1.0.0',
+      ruleEffectiveFrom: scheme.rule_effective_from || scheme.effective_date || '2025-01-01',
+      lastVerifiedAt: scheme.last_verified_at || '2026-08-28T00:00:00Z',
+      officialSource: scheme.official_source || scheme.source_url
     };
   },
 
-  evaluateEligibility(profile, householdMembers, schemes) {
-    if (!profile || !schemes || schemes.length === 0) return [];
-    return schemes.map(s => this.evaluateScheme(profile, householdMembers || [], s));
+  /**
+   * Evaluates all schemes for a citizen profile
+   */
+  evaluateEligibility(citizen, householdMembers = [], schemes = [], citizenDocuments = []) {
+    if (!citizen || !schemes || schemes.length === 0) return [];
+    return schemes.map(s => this.evaluateScheme(citizen, householdMembers, s, citizenDocuments));
+  },
+
+  /**
+   * Evaluates entire household and aggregates portfolio entitlements
+   */
+  evaluateHouseholdPortfolio(citizen, householdMembers = [], schemes = [], citizenDocuments = []) {
+    const allMembers = [
+      { ...citizen, relation: 'Self', isPrimary: true },
+      ...(householdMembers || []).map(m => ({ ...m, isPrimary: false }))
+    ];
+
+    const memberEvaluations = allMembers.map(member => {
+      const results = this.evaluateEligibility(member, householdMembers, schemes, citizenDocuments);
+      const eligible = results.filter(r => r.status === 'eligible');
+      const nearlyEligible = results.filter(r => r.status === 'nearly_eligible');
+
+      return {
+        memberId: member.id || member.relation,
+        name: member.name || member.relation,
+        relation: member.relation || 'Member',
+        occupation: member.occupation || 'unspecified',
+        age: member.age,
+        eligibleCount: eligible.length,
+        nearlyCount: nearlyEligible.length,
+        eligibleSchemes: eligible,
+        nearlySchemes: nearlyEligible
+      };
+    });
+
+    // Aggregate deduplicated schemes across the household
+    const householdSchemeMap = new Map();
+    memberEvaluations.forEach(me => {
+      me.eligibleSchemes.forEach(s => {
+        if (!householdSchemeMap.has(s.schemeId)) {
+          householdSchemeMap.set(s.schemeId, {
+            ...s,
+            beneficiaries: [me.name],
+            priorityScore: (s.matchPercentage || 100) - (s.missingDocumentsCount * 10)
+          });
+        } else {
+          householdSchemeMap.get(s.schemeId).beneficiaries.push(me.name);
+        }
+      });
+    });
+
+    const portfolioSchemes = Array.from(householdSchemeMap.values())
+      .sort((a, b) => b.priorityScore - a.priorityScore);
+
+    return {
+      totalMembers: allMembers.length,
+      memberEvaluations,
+      portfolioSchemes,
+      totalHouseholdEligible: portfolioSchemes.length
+    };
   },
 
   groupByStatus(results) {
