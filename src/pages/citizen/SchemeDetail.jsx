@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useSchemes } from '../../context/SchemeContext';
-import { CheckCircle, XCircle, AlertTriangle, Send, Bookmark, Layers, ArrowRight, ShieldCheck, FileText, ExternalLink } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, Send, Bookmark, Layers, ArrowRight, ShieldCheck, FileText, ExternalLink, Award, Printer } from 'lucide-react';
 import FeedbackWidget from '../../components/common/FeedbackWidget';
+import DossierModal from '../../components/common/DossierModal';
 
 export default function CitizenSchemeDetail() {
   const { id } = useParams();
@@ -13,6 +14,7 @@ export default function CitizenSchemeDetail() {
 
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'eligibility' | 'documents' | 'application' | 'provenance'
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+  const [isDossierOpen, setIsDossierOpen] = useState(false);
   const [notes, setNotes] = useState('');
   const [appliedSuccess, setAppliedSuccess] = useState(null);
 
@@ -79,6 +81,15 @@ export default function CitizenSchemeDetail() {
               >
                 <Bookmark size={14} color={isSaved ? 'var(--seal-vermillion)' : 'currentColor'} fill={isSaved ? 'var(--seal-vermillion)' : 'none'} />
                 {isSaved ? 'Bookmarked' : 'Save Scheme'}
+              </button>
+
+              <button
+                onClick={() => setIsDossierOpen(true)}
+                className="btn btn-secondary btn-sm"
+                style={{ display: 'flex', alignItems: 'center', gap: '4px', borderColor: 'var(--brass-gold)', color: 'var(--ink-navy)' }}
+                title="View & Print Official Eligibility Dossier"
+              >
+                <Award size={14} color="var(--brass-gold)" /> Official Dossier
               </button>
 
               <Link
@@ -437,6 +448,16 @@ export default function CitizenSchemeDetail() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Official Dossier & Printable Passport Modal */}
+      {isDossierOpen && (
+        <DossierModal
+          scheme={scheme}
+          evaluation={evaluation}
+          profile={profile}
+          onClose={() => setIsDossierOpen(false)}
+        />
       )}
     </div>
   );

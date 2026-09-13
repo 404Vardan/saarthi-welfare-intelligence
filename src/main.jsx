@@ -14,6 +14,7 @@ import './styles/operations.css';
 // Context Providers
 import { AuthProvider } from './context/AuthContext';
 import { SchemeProvider } from './context/SchemeContext';
+import { LanguageProvider } from './context/LanguageContext';
 import { ToastProvider } from './components/common/ToastNotification';
 
 // Error Boundary
@@ -27,11 +28,13 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <ErrorBoundary>
       <BrowserRouter>
         <ToastProvider>
-          <AuthProvider>
-            <SchemeProvider>
-              <App />
-            </SchemeProvider>
-          </AuthProvider>
+          <LanguageProvider>
+            <AuthProvider>
+              <SchemeProvider>
+                <App />
+              </SchemeProvider>
+            </AuthProvider>
+          </LanguageProvider>
         </ToastProvider>
       </BrowserRouter>
     </ErrorBoundary>

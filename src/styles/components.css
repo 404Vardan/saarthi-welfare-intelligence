@@ -639,3 +639,28 @@
     max-height: none;
   }
 }
+
+/* Print Styles for Official Dossier */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .dossier-printable, .dossier-printable * {
+    visibility: visible;
+  }
+  .dossier-printable {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
+
