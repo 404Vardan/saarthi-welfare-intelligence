@@ -13,22 +13,27 @@ import './styles/operations.css';
 
 // Context Providers
 import { AuthProvider } from './context/AuthContext';
-import { OpsAuthProvider } from './context/OpsAuthContext';
 import { SchemeProvider } from './context/SchemeContext';
+import { ToastProvider } from './components/common/ToastNotification';
+
+// Error Boundary
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 // Main App
 import App from './App';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>
-      <AuthProvider>
-        <OpsAuthProvider>
-          <SchemeProvider>
-            <App />
-          </SchemeProvider>
-        </OpsAuthProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <ToastProvider>
+          <AuthProvider>
+            <SchemeProvider>
+              <App />
+            </SchemeProvider>
+          </AuthProvider>
+        </ToastProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   </React.StrictMode>
 );

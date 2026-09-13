@@ -310,3 +310,36 @@
 .ops-field { padding: 12px; background: rgba(255,255,255,0.02); border-radius: 8px; }
 .ops-field-label { font-size: 11px; color: rgba(255,255,255,0.4); text-transform: uppercase; margin-bottom: 4px; }
 .ops-field-value { font-size: 14px; color: rgba(255,255,255,0.85); }
+
+/* ============================================ */
+/* RESPONSIVE — Operations Portal               */
+/* ============================================ */
+@media (max-width: 1024px) {
+  .ops-layout {
+    grid-template-columns: 1fr;
+  }
+  .ops-sidebar {
+    position: fixed;
+    left: -280px;
+    top: 0;
+    bottom: 0;
+    width: 260px;
+    z-index: var(--z-sidebar, 100);
+    transition: left 0.3s ease;
+  }
+  .ops-sidebar.open {
+    left: 0;
+  }
+  .ops-main {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .ops-main {
+    padding: 0.75rem;
+  }
+  .ops-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}

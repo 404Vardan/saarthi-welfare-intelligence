@@ -1,48 +1,26 @@
 // Google Gemini Integration for "Ask Saarthi" Welfare Assistant
+import { supabase } from './supabaseClient';
 
 export const GeminiAPI = {
   async generateWelfareGuidance(userQuery, citizenProfile, matchedSchemes = [], missingDocs = []) {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-
-    // Construct grounded context prompt
-    const systemPrompt = `You are Saarthi, an official AI welfare guidance assistant for India.
-Explain government schemes and application steps strictly based on the citizen's verified profile and gazette rules.
-IMPORTANT: You DO NOT determine eligibility—the deterministic rule engine already did that. Do NOT contradict the rule engine.
-
-Citizen Context:
-- Name: ${citizenProfile?.full_name || 'Citizen'}
-- Occupation: ${citizenProfile?.occupation || 'Farmer'}
-- State & District: ${citizenProfile?.state || 'Gujarat'}, ${citizenProfile?.district || 'Anand'}
-- Annual Income: ₹${citizenProfile?.income_annual?.toLocaleString('en-IN') || '1,80,000'}
-- Land Ownership: ${citizenProfile?.land_ownership || '2 to 5 acres'}
-- Matched Eligible Schemes (${matchedSchemes.length}): ${matchedSchemes.map(s => s.schemeName).join(', ')}
-- Missing Verification Proofs: ${missingDocs.map(d => d.name).join(', ') || 'None (100% Ready)'}
-
-Query from Citizen: "${userQuery}"
-
-Provide a concise, helpful, and respectful response in 2-3 sentences.`;
-
-    if (apiKey) {
-      try {
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: systemPrompt }] }]
-            })
-          }
-        );
-
-        if (response.ok) {
-          const data = await response.json();
-          const replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (replyText) return replyText;
+    try {
+      const { data, error } = await supabase.functions.invoke('ask-saarthi', {
+        body: {
+          query: userQuery,
+          citizenContext: citizenProfile,
+          matchedSchemes,
+          missingDocs
         }
-      } catch (err) {
-        console.warn('Gemini API call failed, using verified fallback rules:', err);
+      });
+
+      if (!error && data && !data.fallback && data.response) {
+        return data.response;
       }
+      if (error) {
+        console.warn('Edge function returned an error:', error);
+      }
+    } catch (err) {
+      console.warn('Failed to invoke ask-saarthi edge function, using verified fallback rules:', err);
     }
 
     // Grounded deterministic response fallback

@@ -6,27 +6,33 @@ import { ShieldCheck, UserCheck, KeyRound, Mail, UserPlus } from 'lucide-react';
 export default function CitizenLogin() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, forgotPassword } = useAuth();
 
-  const [activeTab, setActiveTab] = useState('signin'); // 'signin' | 'signup'
-  const [email, setEmail] = useState('citizen@saarthi.gov.in');
-  const [password, setPassword] = useState('saarthi-demo-2026');
-  const [fullName, setFullName] = useState('Ramesh Kumar Yadav');
+  const [activeTab, setActiveTab] = useState('signin');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const redirectPath = location.state?.from?.pathname || '/citizen/dashboard';
 
   const handleSignIn = async (e) => {
     e.preventDefault();
+    if (!email.trim() || !password.trim()) {
+      setErrorMsg('Please enter both email and password.');
+      return;
+    }
     setLoading(true);
     setErrorMsg('');
-    const res = await signIn(email, password);
+    const res = await signIn(email.trim(), password);
     setLoading(false);
     if (res.success) {
       navigate(redirectPath, { replace: true });
     } else {
-      setErrorMsg(res.error || 'Failed to authenticate.');
+      setErrorMsg(res.error || 'Authentication failed. Please check your credentials.');
     }
   };
 
@@ -36,9 +42,17 @@ export default function CitizenLogin() {
       setErrorMsg('Please enter your full name.');
       return;
     }
+    if (!email.trim()) {
+      setErrorMsg('Please enter a valid email address.');
+      return;
+    }
+    if (password.length < 6) {
+      setErrorMsg('Password must be at least 6 characters.');
+      return;
+    }
     setLoading(true);
     setErrorMsg('');
-    const res = await signUp(email, password, fullName.trim());
+    const res = await signUp(email.trim(), password, fullName.trim());
     setLoading(false);
     if (res.success) {
       navigate(redirectPath, { replace: true });
@@ -47,11 +61,22 @@ export default function CitizenLogin() {
     }
   };
 
-  const handleDemoLogin = async () => {
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!email.trim()) {
+      setErrorMsg('Please enter your email address to reset password.');
+      return;
+    }
     setLoading(true);
-    await signIn('citizen@saarthi.gov.in', 'saarthi-demo-2026');
+    setErrorMsg('');
+    setSuccessMsg('');
+    const res = await forgotPassword(email.trim());
     setLoading(false);
-    navigate(redirectPath, { replace: true });
+    if (res.success) {
+      setSuccessMsg('Password reset link sent to your email. Please check your inbox.');
+    } else {
+      setErrorMsg(res.error || 'Failed to send reset email.');
+    }
   };
 
   return (
@@ -68,143 +93,201 @@ export default function CitizenLogin() {
           </p>
         </div>
 
-        {/* Tab Switcher */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', background: 'var(--paper)', padding: '4px', borderRadius: '6px', marginBottom: '1.5rem', border: '1px solid var(--border)' }}>
-          <button
-            type="button"
-            onClick={() => { setActiveTab('signin'); setErrorMsg(''); }}
-            style={{
-              padding: '8px',
-              border: 'none',
-              background: activeTab === 'signin' ? '#FFFDF9' : 'transparent',
-              fontWeight: 600,
-              fontSize: '0.85rem',
-              color: activeTab === 'signin' ? 'var(--ink-navy)' : 'var(--slate)',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              boxShadow: activeTab === 'signin' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
-            }}
-          >
-            Sign In
-          </button>
-          <button
-            type="button"
-            onClick={() => { setActiveTab('signup'); setErrorMsg(''); }}
-            style={{
-              padding: '8px',
-              border: 'none',
-              background: activeTab === 'signup' ? '#FFFDF9' : 'transparent',
-              fontWeight: 600,
-              fontSize: '0.85rem',
-              color: activeTab === 'signup' ? 'var(--ink-navy)' : 'var(--slate)',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              boxShadow: activeTab === 'signup' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
-            }}
-          >
-            Create Account
-          </button>
-        </div>
+        {/* Forgot Password View */}
+        {showForgotPassword ? (
+          <>
+            <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--ink-navy)', margin: '0 0 0.5rem 0' }}>
+              Reset Password
+            </h3>
+            <p style={{ color: 'var(--slate)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+              Enter your email and we'll send you a reset link.
+            </p>
 
-        {errorMsg && (
-          <div style={{ background: 'rgba(193,68,45,0.1)', color: 'var(--seal-vermillion)', padding: '10px', borderRadius: '4px', fontSize: '0.85rem', marginBottom: '1rem', border: '1px solid rgba(193,68,45,0.3)' }}>
-            ⚠️ {errorMsg}
-          </div>
-        )}
+            {errorMsg && (
+              <div style={{ background: 'rgba(193,68,45,0.1)', color: 'var(--seal-vermillion)', padding: '10px', borderRadius: '4px', fontSize: '0.85rem', marginBottom: '1rem', border: '1px solid rgba(193,68,45,0.3)' }}>
+                ⚠️ {errorMsg}
+              </div>
+            )}
+            {successMsg && (
+              <div style={{ background: 'rgba(34,139,34,0.1)', color: '#228B22', padding: '10px', borderRadius: '4px', fontSize: '0.85rem', marginBottom: '1rem', border: '1px solid rgba(34,139,34,0.3)' }}>
+                ✓ {successMsg}
+              </div>
+            )}
 
-        {activeTab === 'signin' ? (
-          <form onSubmit={handleSignIn}>
-            <div className="form-group">
-              <label className="form-label">Email or Mobile Number</label>
-              <input
-                type="email"
-                className="form-input"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-              />
+            <form onSubmit={handleForgotPassword}>
+              <div className="form-group">
+                <label className="form-label">Email Address</label>
+                <input
+                  type="email"
+                  className="form-input"
+                  placeholder="your.email@example.com"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={loading}
+                style={{ width: '100%', padding: '12px', marginTop: '8px' }}
+              >
+                {loading ? 'Sending...' : 'Send Reset Link'}
+              </button>
+            </form>
+
+            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+              <button
+                type="button"
+                onClick={() => { setShowForgotPassword(false); setErrorMsg(''); setSuccessMsg(''); }}
+                style={{ background: 'none', border: 'none', color: 'var(--brass-gold)', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}
+              >
+                ← Back to Sign In
+              </button>
             </div>
-
-            <div className="form-group">
-              <label className="form-label">Password / Passcode</label>
-              <input
-                type="password"
-                className="form-input"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={loading}
-              style={{ width: '100%', padding: '12px', marginTop: '8px' }}
-            >
-              {loading ? 'Authenticating...' : 'Sign In to Welfare Passport →'}
-            </button>
-          </form>
+          </>
         ) : (
-          <form onSubmit={handleSignUp}>
-            <div className="form-group">
-              <label className="form-label">Full Legal Name</label>
-              <input
-                type="text"
-                className="form-input"
-                placeholder="e.g. Ramesh Kumar Yadav"
-                value={fullName}
-                onChange={e => setFullName(e.target.value)}
-                required
-              />
+          <>
+            {/* Tab Switcher */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', background: 'var(--paper)', padding: '4px', borderRadius: '6px', marginBottom: '1.5rem', border: '1px solid var(--border)' }}>
+              <button
+                type="button"
+                onClick={() => { setActiveTab('signin'); setErrorMsg(''); }}
+                style={{
+                  padding: '8px',
+                  border: 'none',
+                  background: activeTab === 'signin' ? '#FFFDF9' : 'transparent',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  color: activeTab === 'signin' ? 'var(--ink-navy)' : 'var(--slate)',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  boxShadow: activeTab === 'signin' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
+                }}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => { setActiveTab('signup'); setErrorMsg(''); }}
+                style={{
+                  padding: '8px',
+                  border: 'none',
+                  background: activeTab === 'signup' ? '#FFFDF9' : 'transparent',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  color: activeTab === 'signup' ? 'var(--ink-navy)' : 'var(--slate)',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  boxShadow: activeTab === 'signup' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
+                }}
+              >
+                Create Account
+              </button>
             </div>
 
-            <div className="form-group">
-              <label className="form-label">Email Address</label>
-              <input
-                type="email"
-                className="form-input"
-                placeholder="your.email@domain.com"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                required
-              />
-            </div>
+            {errorMsg && (
+              <div style={{ background: 'rgba(193,68,45,0.1)', color: 'var(--seal-vermillion)', padding: '10px', borderRadius: '4px', fontSize: '0.85rem', marginBottom: '1rem', border: '1px solid rgba(193,68,45,0.3)' }}>
+                ⚠️ {errorMsg}
+              </div>
+            )}
 
-            <div className="form-group">
-              <label className="form-label">Create Secure Password</label>
-              <input
-                type="password"
-                className="form-input"
-                placeholder="Minimum 6 characters"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-              />
-            </div>
+            {activeTab === 'signin' ? (
+              <form onSubmit={handleSignIn}>
+                <div className="form-group">
+                  <label className="form-label">Email Address</label>
+                  <input
+                    type="email"
+                    className="form-input"
+                    placeholder="your.email@example.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
 
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={loading}
-              style={{ width: '100%', padding: '12px', marginTop: '8px' }}
-            >
-              {loading ? 'Registering Passport...' : 'Create Welfare Passport →'}
-            </button>
-          </form>
+                <div className="form-group">
+                  <label className="form-label">Password</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div style={{ textAlign: 'right', marginBottom: '12px' }}>
+                  <button
+                    type="button"
+                    onClick={() => { setShowForgotPassword(true); setErrorMsg(''); }}
+                    style={{ background: 'none', border: 'none', color: 'var(--brass-gold)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500 }}
+                  >
+                    Forgot Password?
+                  </button>
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={loading}
+                  style={{ width: '100%', padding: '12px' }}
+                >
+                  {loading ? 'Authenticating...' : 'Sign In →'}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleSignUp}>
+                <div className="form-group">
+                  <label className="form-label">Full Name</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="e.g. Ramesh Kumar Yadav"
+                    value={fullName}
+                    onChange={e => setFullName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Email Address</label>
+                  <input
+                    type="email"
+                    className="form-input"
+                    placeholder="your.email@example.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Create Password</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    placeholder="Minimum 6 characters"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    minLength={6}
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={loading}
+                  style={{ width: '100%', padding: '12px', marginTop: '8px' }}
+                >
+                  {loading ? 'Creating Account...' : 'Create Welfare Passport →'}
+                </button>
+              </form>
+            )}
+          </>
         )}
-
-        {/* 1-Click Demo Login */}
-        <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border)' }}>
-          <button
-            type="button"
-            onClick={handleDemoLogin}
-            className="btn btn-secondary"
-            style={{ width: '100%', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-          >
-            <UserCheck size={16} /> 1-Click Demo Citizen Sign In (Ramesh Yadav)
-          </button>
-        </div>
 
         <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
           <Link to="/" style={{ color: 'var(--slate)', fontSize: '0.85rem' }}>

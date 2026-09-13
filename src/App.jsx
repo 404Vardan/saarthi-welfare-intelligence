@@ -56,12 +56,12 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
       </Route>
 
-      {/* 2. Citizen Portal */}
+      {/* 2. Citizen Portal — requires citizen role */}
       <Route path="/citizen/login" element={<CitizenLogin />} />
       <Route
         path="/citizen"
         element={
-          <ProtectedRoute role="citizen">
+          <ProtectedRoute allowedRoles={['citizen']}>
             <CitizenLayout />
           </ProtectedRoute>
         }
@@ -83,9 +83,16 @@ export default function App() {
         <Route path="settings" element={<CitizenSettings />} />
       </Route>
 
-      {/* 3. Government Portal */}
+      {/* 3. Government Portal — requires government or admin role */}
       <Route path="/government/login" element={<GovLogin />} />
-      <Route path="/government" element={<GovernmentLayout />}>
+      <Route
+        path="/government"
+        element={
+          <ProtectedRoute allowedRoles={['government', 'admin']}>
+            <GovernmentLayout />
+          </ProtectedRoute>
+        }
+      >
         <Route index element={<Navigate to="/government/dashboard" replace />} />
         <Route path="dashboard" element={<GovDashboard />} />
         <Route path="districts" element={<GovDistricts />} />
@@ -98,12 +105,12 @@ export default function App() {
         <Route path="settings" element={<GovSettings />} />
       </Route>
 
-      {/* 4. Operations Portal */}
+      {/* 4. Operations Portal — requires admin role */}
       <Route path="/operations/login" element={<OpsLogin />} />
       <Route
         path="/operations"
         element={
-          <ProtectedRoute role="operations">
+          <ProtectedRoute allowedRoles={['admin']}>
             <OperationsLayout />
           </ProtectedRoute>
         }

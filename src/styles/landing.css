@@ -1287,3 +1287,51 @@
   .footer-top-grid { grid-template-columns: 1fr; }
   .footer-bottom-bar { flex-direction: column; text-align: center; }
 }
+
+/* Missing 3D Map Component Classes */
+.map-states-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.state-3d-tile {
+  background: rgba(255, 253, 248, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.state-3d-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.state-tile-header {
+  font-family: var(--font-display, 'Source Serif 4', serif);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--brass-gold, #C4983B);
+  margin-bottom: 0.5rem;
+}
+
+.state-tile-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Reduced Motion Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .stampThump,
+  .stampHit,
+  [class*="animate"],
+  [class*="transition"] {
+    animation: none !important;
+    transition: none !important;
+  }
+}

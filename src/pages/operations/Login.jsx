@@ -1,21 +1,39 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useOpsAuth } from '../../context/OpsAuthContext';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 export default function OpsLogin() {
   const navigate = useNavigate();
-  const { login } = useOpsAuth();
-  const [email, setEmail] = useState('ops@saarthi.gov.in');
-  const [passphrase, setPassphrase] = useState('saarthi-ops-2026');
-  const [error, setError] = useState('');
+  const location = useLocation();
+  const { signIn } = useAuth();
 
-  const handleSubmit = (e) => {
+  const [email, setEmail] = useState('');
+  const [passphrase, setPassphrase] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const redirectPath = location.state?.from?.pathname || '/operations/dashboard';
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = login(email, passphrase);
+    if (!email.trim() || !passphrase.trim()) {
+      setError('Please enter both email and passphrase.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    const result = await signIn(email.trim(), passphrase);
+    setLoading(false);
+
     if (result.success) {
-      navigate('/operations/dashboard');
+      // Verify the user has admin role
+      if (result.role === 'admin') {
+        navigate(redirectPath, { replace: true });
+      } else {
+        setError('Access denied. This portal is restricted to platform administrators. Your role: ' + (result.role || 'citizen'));
+      }
     } else {
-      setError(result.error);
+      setError(result.error || 'Authentication failed. Please check your credentials.');
     }
   };
 
@@ -36,6 +54,7 @@ export default function OpsLogin() {
             <input
               type="email"
               className="ops-input"
+              placeholder="admin@saarthi.gov.in"
               value={email}
               onChange={e => setEmail(e.target.value)}
               required
@@ -47,6 +66,7 @@ export default function OpsLogin() {
             <input
               type="password"
               className="ops-input"
+              placeholder="Enter your passphrase"
               value={passphrase}
               onChange={e => setPassphrase(e.target.value)}
               required
@@ -59,8 +79,8 @@ export default function OpsLogin() {
             </div>
           )}
 
-          <button type="submit" className="ops-btn ops-btn-primary">
-            Sign In to Operations
+          <button type="submit" className="ops-btn ops-btn-primary" disabled={loading}>
+            {loading ? 'Authenticating...' : 'Sign In to Operations'}
           </button>
         </form>
 
@@ -71,8 +91,7 @@ export default function OpsLogin() {
         </div>
 
         <div style={{ marginTop: '32px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.3)' }}>
-          🔒 Authorized Saarthi operators only.<br />
-          Demo credentials pre-filled for prototype access.
+          🔒 Authorized platform administrators only.
         </div>
       </div>
     </div>

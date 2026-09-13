@@ -92,3 +92,41 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ============================================ */
+/* RESPONSIVE — Government Portal                */
+/* ============================================ */
+@media (max-width: 1024px) {
+  .gov-shell {
+    grid-template-columns: 1fr;
+  }
+  .gov-sidebar {
+    position: fixed;
+    left: -280px;
+    top: 0;
+    bottom: 0;
+    width: 260px;
+    z-index: var(--z-sidebar, 100);
+    transition: left 0.3s ease;
+  }
+  .gov-sidebar.open {
+    left: 0;
+  }
+  .gov-content {
+    padding: 1rem;
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .gov-content {
+    padding: 0.75rem;
+  }
+  .gov-table {
+    font-size: 0.8rem;
+  }
+  .gov-table th,
+  .gov-table td {
+    padding: 8px 6px;
+  }
+}

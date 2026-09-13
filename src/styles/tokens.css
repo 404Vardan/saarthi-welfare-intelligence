@@ -75,4 +75,14 @@
   --shadow-md: 0 4px 12px rgba(11, 31, 58, 0.08), 0 1px 3px rgba(11, 31, 58, 0.04);
   --shadow-lg: 0 12px 28px rgba(11, 31, 58, 0.12), 0 4px 8px rgba(11, 31, 58, 0.06);
   --shadow-dossier: 0 8px 24px rgba(11, 31, 58, 0.09), 0 2px 4px rgba(11, 31, 58, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+
+  /* Z-Index Scale */
+  --z-base: 1;
+  --z-sidebar: 100;
+  --z-header: 200;
+  --z-dropdown: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-toast: 600;
+  --z-tooltip: 700;
 }
