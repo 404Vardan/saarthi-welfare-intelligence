@@ -47,6 +47,10 @@ import OpsRegistry from './pages/operations/Registry';
 import OpsSchemeDetail from './pages/operations/SchemeDetail';
 import OpsVerification from './pages/operations/Verification';
 import OpsAddScheme from './pages/operations/AddScheme';
+import OpsUsers from './pages/operations/Users';
+import OpsAuditLogs from './pages/operations/AuditLogs';
+import OpsSystemHealth from './pages/operations/SystemHealth';
+import OpsAnalytics from './pages/operations/Analytics';
 import OpsLogin from './pages/operations/Login';
 
 export default function App() {
@@ -119,10 +123,14 @@ export default function App() {
       >
         <Route index element={<Navigate to="/operations/dashboard" replace />} />
         <Route path="dashboard" element={<OpsDashboard />} />
+        <Route path="users" element={<OpsUsers />} />
         <Route path="registry" element={<OpsRegistry />} />
         <Route path="scheme/:id" element={<OpsSchemeDetail />} />
         <Route path="verification" element={<OpsVerification />} />
         <Route path="add-scheme" element={<OpsAddScheme />} />
+        <Route path="analytics" element={<OpsAnalytics />} />
+        <Route path="audit-logs" element={<OpsAuditLogs />} />
+        <Route path="system-health" element={<OpsSystemHealth />} />
       </Route>
 
       {/* Fallback */}

@@ -1,29 +1,37 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { useOpsAuth } from '../../context/OpsAuthContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   LayoutDashboard,
+  Users,
   ClipboardList,
   CheckCircle2,
   PlusCircle,
+  BarChart3,
+  ShieldCheck,
+  Activity,
   LogOut
 } from 'lucide-react';
 
 export default function OperationsLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated, operator, logout } = useOpsAuth();
+  const { user, signOut } = useAuth();
 
   const navItems = [
-    { label: 'Dashboard', path: '/operations/dashboard', icon: LayoutDashboard },
+    { label: 'Command Center', path: '/operations/dashboard', icon: LayoutDashboard },
+    { label: 'User & RBAC Mgmt', path: '/operations/users', icon: Users },
     { label: 'Scheme Registry', path: '/operations/registry', icon: ClipboardList },
     { label: 'Verification Queue', path: '/operations/verification', icon: CheckCircle2 },
-    { label: 'Add Scheme', path: '/operations/add-scheme', icon: PlusCircle },
+    { label: 'Ingest Programme', path: '/operations/add-scheme', icon: PlusCircle },
+    { label: 'Funnel Telemetry', path: '/operations/analytics', icon: BarChart3 },
+    { label: 'Security Audit Logs', path: '/operations/audit-logs', icon: ShieldCheck },
+    { label: 'System Health', path: '/operations/system-health', icon: Activity },
   ];
 
-  const handleLogout = (e) => {
+  const handleLogout = async (e) => {
     e.preventDefault();
-    logout();
+    if (signOut) await signOut();
     navigate('/operations/login');
   };
 
@@ -38,7 +46,7 @@ export default function OperationsLayout() {
             </span>
           </Link>
           <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
-            Scheme Operations
+            Platform Control Center
           </div>
         </div>
 
@@ -61,15 +69,15 @@ export default function OperationsLayout() {
 
         <div className="sidebar-footer">
           <div style={{ fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>
-            {operator?.name || 'Demo Operator'}
+            {user?.full_name || 'Vardan (Admin)'}
           </div>
           <div style={{ color: 'rgba(255,255,255,0.35)', marginTop: '2px' }}>
-            {operator?.role || 'Admin'}
+            Platform Administrator
           </div>
           <a
             href="#logout"
             onClick={handleLogout}
-            style={{ color: '#e8c547', cursor: 'pointer', fontSize: '0.7rem', marginTop: '6px', display: 'inline-block' }}
+            style={{ color: '#e8c547', cursor: 'pointer', fontSize: '0.75rem', marginTop: '6px', display: 'inline-block' }}
           >
             Sign Out
           </a>
