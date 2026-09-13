@@ -125,6 +125,9 @@ export default function GovPerformance() {
     <div>
       <header className="gov-page-header" style={{ marginBottom: '1.5rem' }}>
         <div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '3px 8px', borderRadius: '4px', background: 'rgba(197, 160, 89, 0.12)', color: 'var(--brass-gold)', fontSize: '0.72rem', fontWeight: 700, marginBottom: '6px', border: '1px solid rgba(197, 160, 89, 0.3)' }}>
+            [ADMINISTRATIVE / NIC BENCHMARK DATASET]
+          </div>
           <h1 className="gov-page-title">Scheme Performance & Delivery Scorecard</h1>
           <p className="gov-page-subtitle">
             Cross-ministry disbursement velocity, turnaround SLAs, and target saturation analytics.

@@ -402,6 +402,31 @@ export const EligibilityEngine = {
   },
 
   /**
+   * Builds canonical context object for AST evaluation
+   */
+  buildContext(citizen = {}, householdMembers = [], citizenDocuments = []) {
+    const aggregateIncome = this.computeHouseholdIncome(citizen, householdMembers);
+    return {
+      citizen: {
+        ...citizen,
+        income_annual: (citizen?.income_annual !== undefined && citizen?.income_annual !== null && citizen?.income_annual !== '')
+          ? Number(citizen.income_annual)
+          : undefined,
+        age: (citizen?.age !== undefined && citizen?.age !== null && citizen?.age !== '')
+          ? Number(citizen.age)
+          : undefined
+      },
+      household: {
+        income_annual: aggregateIncome,
+        aggregate_income: aggregateIncome,
+        membersCount: (householdMembers || []).length + 1,
+        members: householdMembers || []
+      },
+      documents: citizenDocuments || []
+    };
+  },
+
+  /**
    * Flattens AST breakdown for simple UI display & table rendering
    */
   flattenBreakdown(node) {
@@ -410,7 +435,8 @@ export const EligibilityEngine = {
       list.push({
         rule: node.label,
         field: node.field,
-        status: node.passed ? 'passed' : 'failed',
+        status: node.status || (node.passed ? 'passed' : 'failed'),
+        isMissingData: Boolean(node.isMissingData),
         citizenValue: node.citizenValue,
         requiredValue: node.requiredValue,
         impact: node.impact,
@@ -482,23 +508,7 @@ export const EligibilityEngine = {
    * Evaluates a full Scheme against a Citizen Profile + Household + Documents Context
    */
   evaluateScheme(citizen = {}, householdMembers = [], scheme = {}, citizenDocuments = []) {
-    const context = {
-      citizen: {
-        ...citizen,
-        income_annual: (citizen?.income_annual !== undefined && citizen?.income_annual !== null && citizen?.income_annual !== '')
-          ? Number(citizen.income_annual)
-          : undefined,
-        age: (citizen?.age !== undefined && citizen?.age !== null && citizen?.age !== '')
-          ? Number(citizen.age)
-          : undefined
-      },
-      household: {
-        income_annual: this.computeHouseholdIncome(citizen, householdMembers),
-        membersCount: (householdMembers || []).length + 1,
-        members: householdMembers || []
-      },
-      documents: citizenDocuments || []
-    };
+    const context = this.buildContext(citizen, householdMembers, citizenDocuments);
 
     // Obtain or construct AST
     const ast = scheme.ast_rules || (scheme.rules ? this.convertLegacyRulesToAST(scheme.rules) : null);
@@ -564,6 +574,7 @@ export const EligibilityEngine = {
 
     return {
       decisionId,
+      decision_reference_id: decisionId,
       schemeId: scheme.id,
       schemeCode: scheme.scheme_code || scheme.short_name,
       schemeName: scheme.name || scheme.official_name,
@@ -577,6 +588,7 @@ export const EligibilityEngine = {
       status,
       matchPercentage,
       missingDataCount,
+      missingFields: flatBreakdown.filter(b => b.isMissingData || b.status === 'insufficient_data').map(b => b.field),
       ruleBreakdown: flatBreakdown,
       astResult,
       documents: docEval.docStatus,

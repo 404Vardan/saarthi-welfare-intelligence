@@ -45,6 +45,9 @@ export default function GovGapAnalysis() {
 
   return (
     <div>
+      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '3px 8px', borderRadius: '4px', background: 'rgba(197, 160, 89, 0.12)', color: 'var(--brass-gold)', fontSize: '0.72rem', fontWeight: 700, marginBottom: '6px', border: '1px solid rgba(197, 160, 89, 0.3)' }}>
+        [SIMULATED PILOT DATASET / NIC INTERVENTION MODEL]
+      </div>
       <h1 className="gov-page-title">Welfare Delivery Gap & Intervention Simulator</h1>
       <p className="gov-page-subtitle">
         Analyze why legally entitled citizens drop off and model targeted field interventions in real time.

@@ -104,16 +104,16 @@ export default function CitizenExplorer() {
     // Context prioritizes parsed NL attributes if query exists, otherwise citizen profile
     const activeContext = {
       ...profile,
-      age: nlParsedIntent?.age || profile.age || 28,
-      occupation: nlParsedIntent?.occupation || profile.occupation || 'farmer',
+      age: nlParsedIntent?.age !== null && nlParsedIntent?.age !== undefined ? nlParsedIntent.age : profile?.age,
+      occupation: nlParsedIntent?.occupation || profile?.occupation,
       income_annual: nlParsedIntent?.maxIncome !== null && nlParsedIntent?.maxIncome !== undefined
         ? nlParsedIntent.maxIncome
-        : (profile.income_annual || 180000),
-      category: nlParsedIntent?.category || profile.category || 'obc',
-      state: nlParsedIntent?.state || profile.state || 'Gujarat',
+        : profile?.income_annual,
+      category: nlParsedIntent?.category || profile?.category,
+      state: nlParsedIntent?.state || profile?.state,
       bpl_card: nlParsedIntent?.bpl !== null && nlParsedIntent?.bpl !== undefined
         ? nlParsedIntent.bpl
-        : (profile.bpl_card || false)
+        : profile?.bpl_card
     };
 
     return schemes.map(scheme => {
@@ -374,9 +374,11 @@ export default function CitizenExplorer() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     {evalRes.ruleBreakdown.slice(0, 3).map((rb, idx) => (
                       <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: rb.status === 'passed' ? 'var(--ink-navy)' : 'var(--seal-vermillion)' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px', color: rb.status === 'passed' ? 'var(--ink-navy)' : rb.status === 'insufficient_data' ? 'var(--brass-gold)' : 'var(--seal-vermillion)' }}>
                           {rb.status === 'passed' ? (
                             <CheckCircle2 size={13} color="var(--success-forest)" />
+                          ) : rb.status === 'insufficient_data' ? (
+                            <AlertTriangle size={13} color="var(--brass-gold)" />
                           ) : (
                             <XCircle size={13} color="var(--seal-vermillion)" />
                           )}
@@ -515,6 +517,8 @@ export default function CitizenExplorer() {
                       <td style={{ padding: '8px 12px', textAlign: 'center' }}>
                         {r.status === 'passed' ? (
                           <span style={{ color: 'var(--success-forest)', fontWeight: 700 }}>✓ PASS</span>
+                        ) : r.status === 'insufficient_data' ? (
+                          <span style={{ color: 'var(--brass-gold)', fontWeight: 700 }}>⚠️ INCOMPLETE</span>
                         ) : (
                           <span style={{ color: 'var(--seal-vermillion)', fontWeight: 700 }}>✗ FAIL</span>
                         )}
