@@ -8,8 +8,11 @@ import GovernmentLayout from './components/layout/GovernmentLayout';
 import OperationsLayout from './components/layout/OperationsLayout';
 import ProtectedRoute from './components/common/ProtectedRoute';
 
-// Landing
+// Landing & Public Pages
 import LandingPage from './pages/landing/LandingPage';
+import PrivacyPolicy from './pages/landing/PrivacyPolicy';
+import TermsOfService from './pages/landing/TermsOfService';
+import BetaGuide from './pages/landing/BetaGuide';
 
 // Citizen Pages
 import CitizenDashboard from './pages/citizen/Dashboard';
@@ -56,9 +59,12 @@ import OpsLogin from './pages/operations/Login';
 export default function App() {
   return (
     <Routes>
-      {/* 1. Public Landing */}
+      {/* 1. Public Landing & Legal */}
       <Route element={<PublicLayout />}>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/beta-guide" element={<BetaGuide />} />
       </Route>
 
       {/* 2. Citizen Portal — requires citizen role */}

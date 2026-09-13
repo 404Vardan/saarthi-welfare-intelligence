@@ -88,19 +88,28 @@ export default function PublicLayout() {
             </div>
 
             <div>
-              <div className="footer-col-title">Platform</div>
+              <div className="footer-col-title">Platform & Trust</div>
               <ul className="footer-link-list">
                 <li><a href="/#how-it-works">How It Works</a></li>
                 <li><a href="/#welfare-graph">Welfare Graph</a></li>
-                <li><Link to="/citizen/explorer?type=direct_benefit">Direct Benefit Transfers</Link></li>
-                <li><Link to="/citizen/explorer?type=insurance">Social Security & Insurance</Link></li>
+                <li><Link to="/beta-guide">Beta Testing Guide 🧪</Link></li>
+                <li><Link to="/privacy">Privacy & DPDP Policy 🔒</Link></li>
+                <li><Link to="/terms">Terms of Service 📜</Link></li>
               </ul>
             </div>
           </div>
 
           <div className="footer-bottom-bar">
             <div>Saarthi is an independent welfare intelligence platform. Government affiliation or endorsement is not implied.</div>
-            <div>© 2026 Saarthi · Continuous Scheme Knowledge Architecture</div>
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+              <Link to="/privacy" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>Privacy Policy</Link>
+              <span>·</span>
+              <Link to="/terms" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>Terms</Link>
+              <span>·</span>
+              <Link to="/beta-guide" style={{ color: 'rgba(255,255,255,0.7)', textDecoration: 'none' }}>Beta Guide</Link>
+              <span>·</span>
+              <span>© 2026 Saarthi · Continuous Scheme Knowledge Architecture</span>
+            </div>
           </div>
         </div>
       </footer>
