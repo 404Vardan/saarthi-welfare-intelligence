@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { CheckCircle, XCircle, AlertTriangle, ChevronDown, ChevronUp, Send, Check } from 'lucide-react';
+import FeedbackWidget from '../../components/common/FeedbackWidget';
 
 export default function CitizenRecommendations() {
   const navigate = useNavigate();
@@ -122,6 +123,14 @@ export default function CitizenRecommendations() {
                     ))}
                   </div>
                 )}
+
+                <div style={{ marginTop: '10px', paddingTop: '8px', borderTop: '1px dashed var(--border)', display: 'flex', justifyContent: 'flex-end' }}>
+                  <FeedbackWidget
+                    contextType="recommendation"
+                    contextId={item.schemeId}
+                    contextTitle={item.schemeName}
+                  />
+                </div>
               </div>
             );
           })}

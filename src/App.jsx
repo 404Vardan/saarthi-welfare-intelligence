@@ -13,6 +13,7 @@ import LandingPage from './pages/landing/LandingPage';
 
 // Citizen Pages
 import CitizenDashboard from './pages/citizen/Dashboard';
+import CitizenOnboarding from './pages/citizen/Onboarding';
 import CitizenProfile from './pages/citizen/Profile';
 import CitizenHousehold from './pages/citizen/Household';
 import CitizenBenefits from './pages/citizen/Benefits';
@@ -67,6 +68,7 @@ export default function App() {
         }
       >
         <Route index element={<Navigate to="/citizen/dashboard" replace />} />
+        <Route path="onboarding" element={<CitizenOnboarding />} />
         <Route path="dashboard" element={<CitizenDashboard />} />
         <Route path="profile" element={<CitizenProfile />} />
         <Route path="household" element={<CitizenHousehold />} />

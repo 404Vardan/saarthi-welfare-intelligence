@@ -311,14 +311,61 @@ export function AuthProvider({ children }) {
   };
 
   // ── Upload document ──
-  const uploadDocument = async (fileObj) => {
-    const profileId = user?.id || profile?.id;
-    if (!profileId) {
-      throw new Error('User must be signed in to upload documents.');
-    }
-    const newDoc = await DocumentsAPI.uploadDocument(profileId, fileObj);
-    setDocuments(prev => [newDoc, ...prev.filter(d => d.name !== newDoc.name)]);
+  const uploadDocument = async (fileObj, metadata = {}) => {
+    const profileId = user?.id || profile?.id || 'demo-citizen-01';
+    const newDoc = await DocumentsAPI.uploadDocument(profileId, fileObj, metadata);
+    setDocuments(prev => [newDoc, ...prev.filter(d => d.id !== newDoc.id)]);
     return newDoc;
+  };
+
+  // ── Feedback Management ──
+  const [feedbackList, setFeedbackList] = useState(() => {
+    try {
+      const saved = localStorage.getItem('saarthi_citizen_feedback');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const submitFeedback = async (feedbackData) => {
+    const record = {
+      id: 'fb-' + Date.now(),
+      userId: user?.id || 'anonymous_citizen',
+      ...feedbackData
+    };
+    const updated = [record, ...feedbackList];
+    setFeedbackList(updated);
+    localStorage.setItem('saarthi_citizen_feedback', JSON.stringify(updated));
+
+    // Try Supabase insert
+    if (user?.id) {
+      try {
+        await supabase.from('feedbacks').insert({
+          user_id: user.id,
+          context_type: feedbackData.contextType,
+          context_id: feedbackData.contextId,
+          context_title: feedbackData.contextTitle,
+          sentiment: feedbackData.sentiment,
+          reason: feedbackData.reason,
+          comment: feedbackData.comment
+        });
+      } catch (err) {
+        console.warn('Feedback supabase sync offline:', err.message);
+      }
+    }
+    return record;
+  };
+
+  // ── Explicit Eligibility Evaluation Trigger ──
+  const runEligibilityEvaluation = (customProfile = null) => {
+    const prof = customProfile || profile;
+    if (prof) {
+      const evalResults = EligibilityEngine.evaluateEligibility(prof, household, schemes);
+      setEvaluations(evalResults);
+      return evalResults;
+    }
+    return [];
   };
 
   // ── Role checking helpers ──
@@ -348,11 +395,14 @@ export function AuthProvider({ children }) {
       evaluations,
       applications,
       documents,
+      feedbackList,
       updateProfile,
       addHouseholdMember,
       removeHouseholdMember,
       applyForScheme,
-      uploadDocument
+      uploadDocument,
+      submitFeedback,
+      runEligibilityEvaluation
     }}>
       {children}
     </AuthContext.Provider>

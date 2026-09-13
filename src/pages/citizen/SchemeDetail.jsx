@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useSchemes } from '../../context/SchemeContext';
 import { CheckCircle, XCircle, AlertTriangle, Send, Bookmark, Layers, ArrowRight, ShieldCheck, FileText, ExternalLink } from 'lucide-react';
+import FeedbackWidget from '../../components/common/FeedbackWidget';
 
 export default function CitizenSchemeDetail() {
   const { id } = useParams();
@@ -311,6 +312,18 @@ export default function CitizenSchemeDetail() {
           </div>
         </div>
       )}
+
+      {/* Citizen Feedback Banner */}
+      <div className="card" style={{ marginTop: '1.5rem', padding: '12px 18px', background: '#FFFDF9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+        <div style={{ fontSize: '0.85rem', color: 'var(--slate)' }}>
+          Help us ensure 100% accuracy of official welfare policies in your district.
+        </div>
+        <FeedbackWidget
+          contextType="scheme"
+          contextId={scheme.id || scheme.scheme_code}
+          contextTitle={scheme.name || scheme.official_name}
+        />
+      </div>
 
       {/* Apply Modal */}
       {isApplyModalOpen && (
