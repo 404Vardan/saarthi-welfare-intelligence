@@ -1,29 +1,58 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SchemeRegistryAPI } from '../../api/registryApi';
-import { PlusCircle, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import { SchemesData } from '../../api/schemesData';
+import { EligibilityEngine } from '../../engine/eligibilityEngine';
+import {
+  PlusCircle,
+  FileText,
+  CheckCircle2,
+  AlertCircle,
+  Sparkles,
+  ArrowRight,
+  ArrowLeft,
+  ShieldCheck,
+  Play
+} from 'lucide-react';
 
 export default function OpsAddScheme() {
   const navigate = useNavigate();
+  const [currentStep, setCurrentStep] = useState(1);
+  const [statusMessage, setStatusMessage] = useState('');
+
+  // Form Data
   const [formData, setFormData] = useState({
     scheme_code: '',
     official_name: '',
     short_name: '',
-    scheme_type: 'direct_benefit',
-    gov_level: 'central',
+    category: 'agriculture',
+    government_level: 'central',
+    state: 'All-India',
     ministry: '',
-    department: 'Government of India',
-    benefits_summary: '',
-    benefit_amount: '',
-    documents: 'Aadhaar Card, Bank Passbook, Land Record (7/12)',
-    source_tier: 'TIER_1_PRIMARY',
+    department: 'Department of Welfare',
+    benefit: '₹6,000 / year direct cash transfer',
+    benefit_amount: '₹6,000',
+    type: 'direct_benefit',
+    description: '',
+    documents: 'Aadhaar Card, Land Record (7/12), Bank Passbook',
     source_url: 'https://egazette.gov.in',
-    source_authority: 'Central Ministry Notification',
-    rulesJson: '{\n  "income_limit": 200000,\n  "income_type": "household",\n  "occupation": ["farmer"],\n  "bank_account_required": true\n}'
+    source_authority: 'Gazette of India Notification',
+    rulesJson: '{\n  "income_limit": 250000,\n  "income_type": "household",\n  "occupation": ["farmer"],\n  "land_ownership": ["below_2_acres", "2_to_5_acres", "above_5_acres"],\n  "bank_account_required": true\n}'
   });
 
-  const [status, setStatus] = useState('');
   const [jsonError, setJsonError] = useState('');
+  const [simProfile, setSimProfile] = useState({
+    full_name: 'Simulated Citizen',
+    occupation: 'farmer',
+    income_annual: 180000,
+    land_ownership: 'below_2_acres',
+    state: 'Gujarat',
+    bank_account: true
+  });
+  const [simResult, setSimResult] = useState(null);
+
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleJsonChange = (e) => {
     const val = e.target.value;
@@ -36,10 +65,26 @@ export default function OpsAddScheme() {
     }
   };
 
+  const handleRunSimulator = () => {
+    try {
+      const parsedRules = JSON.parse(formData.rulesJson);
+      const tempScheme = {
+        id: 'sim-scheme',
+        scheme_code: formData.scheme_code || 'TEMP-SCHEME',
+        name: formData.official_name || 'Simulated Scheme',
+        rules: parsedRules
+      };
+      const evalResult = EligibilityEngine.evaluateSingleScheme(simProfile, [], tempScheme);
+      setSimResult(evalResult);
+    } catch (err) {
+      alert('Cannot run simulator: ' + err.message);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (jsonError) {
-      alert('Please fix JSON rule syntax errors before submitting.');
+      alert('Please fix JSON rule syntax errors before saving.');
       return;
     }
 
@@ -54,218 +99,356 @@ export default function OpsAddScheme() {
 
       const docArray = formData.documents.split(',').map(d => d.trim()).filter(Boolean);
 
-      // 1. Ingest Scheme record (UNDER_REVIEW)
-      const newScheme = await SchemeRegistryAPI.createScheme({
+      const newScheme = await SchemesData.addScheme({
         scheme_code: formData.scheme_code.toUpperCase().trim(),
         official_name: formData.official_name.trim(),
+        name: formData.official_name.trim(),
         short_name: formData.short_name.trim() || formData.scheme_code.toUpperCase().trim(),
-        scheme_type: formData.scheme_type,
-        gov_level: formData.gov_level,
+        category: formData.category,
+        government_level: formData.government_level,
+        state: formData.state,
         ministry: formData.ministry.trim(),
         department: formData.department.trim(),
-        benefits_summary: formData.benefits_summary.trim(),
+        description: formData.description.trim(),
+        benefit: formData.benefit.trim(),
         benefit_amount: formData.benefit_amount.trim(),
-        required_documents: docArray,
-        lifecycle_status: 'UNDER_REVIEW'
-      });
-
-      // 2. Ingest initial v1.0 rule version
-      await SchemeRegistryAPI.createRuleVersion(newScheme.id, {
-        version: '1.0',
+        type: formData.type,
         rules: parsedRules,
-        verification_status: 'PENDING',
-        change_summary: 'Initial official gazette ingestion',
-        source_reference: formData.source_authority
+        documents: docArray,
+        official_url: formData.source_url,
+        rule_version: 'v1.0',
+        status: 'active'
       });
 
-      // 3. Ingest Source provenance
-      await SchemeRegistryAPI.addSchemeSource(newScheme.id, {
-        source_tier: formData.source_tier,
-        source_type: 'gazette_notification',
-        source_url: formData.source_url,
-        source_authority: formData.source_authority
-      });
-
-      setStatus('✓ Scheme successfully ingested into Registry under "UNDER_REVIEW" status!');
-      setTimeout(() => navigate('/operations/registry'), 1800);
+      setStatusMessage('✓ Scheme successfully published to the master registry!');
+      setTimeout(() => navigate('/operations/registry'), 1500);
     } catch (err) {
-      alert('Error ingesting scheme: ' + err.message);
+      alert('Error saving scheme: ' + err.message);
     }
   };
 
   return (
     <div>
-      <header className="ops-page-header">
-        <h1 className="ops-page-title">Ingest Welfare Programme</h1>
-        <p className="ops-page-subtitle">
-          Structure newly discovered government gazettes into machine-readable rule definitions. Ingested schemes enter in UNDER_REVIEW status.
-        </p>
+      <header className="ops-page-header" style={{ marginBottom: '1.5rem' }}>
+        <div>
+          <h1 className="ops-page-title">Ingest Statutory Welfare Programme</h1>
+          <p className="ops-page-subtitle">
+            Enter official gazette parameters, build deterministic AST rules, simulate against citizen profiles, and publish to registry.
+          </p>
+        </div>
       </header>
 
-      {status && (
-        <div className="ops-toast success" style={{ position: 'static', marginBottom: '20px' }}>
-          {status}
+      {statusMessage && (
+        <div style={{ background: 'rgba(31,122,77,0.1)', color: 'var(--ledger-green)', padding: '14px 18px', borderRadius: '4px', border: '1px solid rgba(31,122,77,0.3)', marginBottom: '1.5rem', fontWeight: 600 }}>
+          {statusMessage}
         </div>
       )}
 
+      {/* Step Tabs */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '2rem' }}>
+        {[
+          { step: 1, label: '1. Administrative Dossier' },
+          { step: 2, label: '2. Rule Builder (AST)' },
+          { step: 3, label: '3. Simulator & Publish' }
+        ].map(item => (
+          <button
+            key={item.step}
+            type="button"
+            onClick={() => setCurrentStep(item.step)}
+            style={{
+              padding: '12px',
+              borderRadius: '4px',
+              border: `1px solid ${currentStep === item.step ? 'var(--seal-vermillion)' : 'var(--border)'}`,
+              background: currentStep === item.step ? '#FFFDF9' : 'var(--paper)',
+              fontWeight: 600,
+              fontSize: '0.88rem',
+              color: currentStep === item.step ? 'var(--seal-vermillion)' : 'var(--ink-navy)',
+              cursor: 'pointer'
+            }}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
       <form onSubmit={handleSubmit}>
-        {/* Section 1: Official Classification */}
-        <div className="ops-card">
-          <h3>1. Administrative Identification</h3>
-          <div className="ops-grid-2">
-            <div className="ops-form-group">
-              <label>Scheme Code / Identifier *</label>
-              <input
-                type="text"
-                className="ops-input"
-                placeholder="e.g. PM-KISAN, PMJAY, PMAY-G"
-                value={formData.scheme_code}
-                onChange={e => setFormData({ ...formData, scheme_code: e.target.value })}
-                required
-              />
+        {/* STEP 1: ADMIN DOSSIER */}
+        {currentStep === 1 && (
+          <div className="card" style={{ padding: '2rem' }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--ink-navy)', marginBottom: '1.25rem' }}>
+              Core Administrative Metadata
+            </h3>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '1.5rem' }}>
+              <div className="form-group">
+                <label className="form-label">Scheme Statutory Code</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. PM-KISAN, PM-JAY, GUJ-MA"
+                  value={formData.scheme_code}
+                  onChange={e => handleChange('scheme_code', e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Short Display Name</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. PM Kisan Samman"
+                  value={formData.short_name}
+                  onChange={e => handleChange('short_name', e.target.value)}
+                />
+              </div>
+
+              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="form-label">Official Title (as per Gazette)</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. Pradhan Mantri Kisan Samman Nidhi"
+                  value={formData.official_name}
+                  onChange={e => handleChange('official_name', e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Nodal Ministry / Department</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. Ministry of Agriculture and Farmers Welfare"
+                  value={formData.ministry}
+                  onChange={e => handleChange('ministry', e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Sector / Category</label>
+                <select
+                  className="form-select"
+                  value={formData.category}
+                  onChange={e => handleChange('category', e.target.value)}
+                >
+                  <option value="agriculture">Agriculture & Allied</option>
+                  <option value="health">Healthcare & Nutrition</option>
+                  <option value="housing">Housing & Sanitation</option>
+                  <option value="social_security">Social Security & Pensions</option>
+                  <option value="credit">Financial Inclusion & MSME</option>
+                  <option value="education">Education & Scholarships</option>
+                  <option value="women">Women & Child Development</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Government Level</label>
+                <select
+                  className="form-select"
+                  value={formData.government_level}
+                  onChange={e => handleChange('government_level', e.target.value)}
+                >
+                  <option value="central">Central Government</option>
+                  <option value="state">State Government</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">State Scope</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="All-India or Specific State (e.g. Gujarat)"
+                  value={formData.state}
+                  onChange={e => handleChange('state', e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Financial Benefit Display</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. ₹6,000 / year in 3 tranches"
+                  value={formData.benefit}
+                  onChange={e => handleChange('benefit', e.target.value)}
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Benefit Amount</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. ₹6,000"
+                  value={formData.benefit_amount}
+                  onChange={e => handleChange('benefit_amount', e.target.value)}
+                />
+              </div>
+
+              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                <label className="form-label">Programme Description</label>
+                <textarea
+                  className="form-input"
+                  placeholder="Official policy summary..."
+                  value={formData.description}
+                  onChange={e => handleChange('description', e.target.value)}
+                  style={{ minHeight: '70px' }}
+                />
+              </div>
             </div>
-            <div className="ops-form-group">
-              <label>Full Official Gazette Title *</label>
-              <input
-                type="text"
-                className="ops-input"
-                placeholder="e.g. Pradhan Mantri Kisan Samman Nidhi"
-                value={formData.official_name}
-                onChange={e => setFormData({ ...formData, official_name: e.target.value })}
-                required
-              />
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setCurrentStep(2)}
+                className="btn btn-primary"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                Proceed to Rule Builder <ArrowRight size={16} />
+              </button>
             </div>
           </div>
+        )}
 
-          <div className="ops-grid-2">
-            <div className="ops-form-group">
-              <label>Disbursement Type</label>
-              <select
-                className="ops-select"
-                value={formData.scheme_type}
-                onChange={e => setFormData({ ...formData, scheme_type: e.target.value })}
-              >
-                <option value="direct_benefit">Direct Benefit Transfer (DBT)</option>
-                <option value="subsidy">Capital Subsidy</option>
-                <option value="insurance">Insurance & Risk Cover</option>
-                <option value="pension">Social Security & Pension</option>
-                <option value="loan">Concessional Credit & Loan</option>
-                <option value="skill_training">Skill Training & Toolkits</option>
-              </select>
-            </div>
-            <div className="ops-form-group">
-              <label>Jurisdiction Level</label>
-              <select
-                className="ops-select"
-                value={formData.gov_level}
-                onChange={e => setFormData({ ...formData, gov_level: e.target.value })}
-              >
-                <option value="central">Central Sector</option>
-                <option value="state">State Scheme</option>
-                <option value="joint">Centrally Sponsored (Joint)</option>
-              </select>
-            </div>
-          </div>
+        {/* STEP 2: RULE BUILDER */}
+        {currentStep === 2 && (
+          <div className="card" style={{ padding: '2rem' }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--ink-navy)', marginBottom: '8px' }}>
+              Deterministic Rule Engine AST Specification
+            </h3>
+            <p style={{ color: 'var(--slate)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+              Configure deterministic eligibility rules. The Saarthi engine parses these attributes against citizen profiles with zero ambiguity.
+            </p>
 
-          <div className="ops-grid-2">
-            <div className="ops-form-group">
-              <label>Nodal Ministry / Department *</label>
-              <input
-                type="text"
-                className="ops-input"
-                placeholder="e.g. Ministry of Agriculture and Farmers Welfare"
-                value={formData.ministry}
-                onChange={e => setFormData({ ...formData, ministry: e.target.value })}
-                required
+            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <label className="form-label">Eligibility Rule Configuration (JSON AST)</label>
+              <textarea
+                className="form-input"
+                style={{
+                  minHeight: '220px',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.85rem',
+                  background: 'var(--paper)',
+                  lineHeight: 1.5
+                }}
+                value={formData.rulesJson}
+                onChange={handleJsonChange}
               />
+              {jsonError && (
+                <div style={{ color: 'var(--seal-vermillion)', fontSize: '0.8rem', marginTop: '6px' }}>
+                  {jsonError}
+                </div>
+              )}
             </div>
-            <div className="ops-form-group">
-              <label>Mandatory Proofs (Comma-Separated)</label>
+
+            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <label className="form-label">Mandatory Verification Proofs (Comma-separated)</label>
               <input
                 type="text"
-                className="ops-input"
+                className="form-input"
                 value={formData.documents}
-                onChange={e => setFormData({ ...formData, documents: e.target.value })}
+                onChange={e => handleChange('documents', e.target.value)}
+                placeholder="Aadhaar Card, Income Certificate, Land Record (7/12)"
               />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <button
+                type="button"
+                onClick={() => setCurrentStep(1)}
+                className="btn btn-secondary"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <ArrowLeft size={16} /> Back
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCurrentStep(3)}
+                className="btn btn-primary"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                Proceed to Simulator <ArrowRight size={16} />
+              </button>
             </div>
           </div>
+        )}
 
-          <div className="ops-grid-2">
-            <div className="ops-form-group">
-              <label>Benefits Summary *</label>
-              <input
-                type="text"
-                className="ops-input"
-                placeholder="e.g. ₹6,000 / year in 3 direct installments"
-                value={formData.benefits_summary}
-                onChange={e => setFormData({ ...formData, benefits_summary: e.target.value })}
-                required
-              />
-            </div>
-            <div className="ops-form-group">
-              <label>Benefit Amount (Display)</label>
-              <input
-                type="text"
-                className="ops-input"
-                placeholder="e.g. ₹6,000, ₹5,00,000"
-                value={formData.benefit_amount}
-                onChange={e => setFormData({ ...formData, benefit_amount: e.target.value })}
-              />
-            </div>
-          </div>
-        </div>
+        {/* STEP 3: SIMULATOR & PUBLISH */}
+        {currentStep === 3 && (
+          <div className="card" style={{ padding: '2rem' }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--ink-navy)', marginBottom: '8px' }}>
+              Rule Simulator & Gazette Verification
+            </h3>
+            <p style={{ color: 'var(--slate)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+              Verify deterministic evaluation accuracy against simulated citizen attributes before publishing.
+            </p>
 
-        {/* Section 2: Source Provenance Tier */}
-        <div className="ops-card">
-          <h3>2. Official Source Provenance (Tier 1)</h3>
-          <div className="ops-grid-2">
-            <div className="ops-form-group">
-              <label>Source Authority / Gazette Citation *</label>
-              <input
-                type="text"
-                className="ops-input"
-                placeholder="e.g. Extraordinary Gazette of India No. 88/2026"
-                value={formData.source_authority}
-                onChange={e => setFormData({ ...formData, source_authority: e.target.value })}
-                required
-              />
+            {/* Simulator Controls */}
+            <div style={{ background: 'var(--paper)', border: '1px solid var(--border)', borderRadius: '6px', padding: '1.25rem', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <span style={{ fontWeight: 600, color: 'var(--ink-navy)', fontSize: '0.9rem' }}>Test Profile Simulation:</span>
+                <button
+                  type="button"
+                  onClick={handleRunSimulator}
+                  className="btn btn-primary btn-sm"
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <Play size={13} fill="currentColor" /> Run Test Evaluation
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '10px', fontSize: '0.8rem' }}>
+                <div><strong>Occupation:</strong> {simProfile.occupation}</div>
+                <div><strong>Annual Income:</strong> ₹{simProfile.income_annual.toLocaleString('en-IN')}</div>
+                <div><strong>Land Holding:</strong> {simProfile.land_ownership}</div>
+                <div><strong>State:</strong> {simProfile.state}</div>
+              </div>
+
+              {simResult && (
+                <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontWeight: 600 }}>Result:</span>
+                  <span className={`badge ${simResult.status === 'eligible' ? 'badge-eligible' : 'badge-nearly'}`}>
+                    {simResult.status === 'eligible' ? '✓ 100% Eligible (Passed)' : 'Action Required / Ineligible'}
+                  </span>
+                </div>
+              )}
             </div>
-            <div className="ops-form-group">
-              <label>Official Gazette URL</label>
+
+            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <label className="form-label">Official Gazette URL</label>
               <input
                 type="url"
-                className="ops-input"
+                className="form-input"
                 value={formData.source_url}
-                onChange={e => setFormData({ ...formData, source_url: e.target.value })}
+                onChange={e => handleChange('source_url', e.target.value)}
               />
             </div>
-          </div>
-        </div>
 
-        {/* Section 3: Structured Rule JSON */}
-        <div className="ops-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <h3 style={{ margin: 0 }}>3. Structured Eligibility Criteria (JSON)</h3>
-            {jsonError ? (
-              <span style={{ color: '#f87171', fontSize: '12px', fontFamily: 'var(--font-mono)' }}>{jsonError}</span>
-            ) : (
-              <span style={{ color: 'var(--ledger-green)', fontSize: '12px', fontFamily: 'var(--font-mono)' }}>✓ Valid JSON Syntax</span>
-            )}
-          </div>
-          <div className="ops-form-group">
-            <textarea
-              className="ops-textarea"
-              style={{ minHeight: '180px', fontFamily: 'var(--font-mono)' }}
-              value={formData.rulesJson}
-              onChange={handleJsonChange}
-              required
-            />
-          </div>
-        </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <button
+                type="button"
+                onClick={() => setCurrentStep(2)}
+                className="btn btn-secondary"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <ArrowLeft size={16} /> Back
+              </button>
 
-        <button type="submit" className="ops-btn ops-btn-primary" style={{ padding: '14px 36px', fontSize: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <PlusCircle size={18} /> Ingest Scheme into Master Registry (Under Review)
-        </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 24px' }}
+              >
+                <ShieldCheck size={16} /> Save & Publish Scheme →
+              </button>
+            </div>
+          </div>
+        )}
       </form>
     </div>
   );

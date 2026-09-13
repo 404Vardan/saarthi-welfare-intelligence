@@ -1,27 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { SchemesData } from '../../api/schemesData';
 import { SchemeRegistryAPI } from '../../api/registryApi';
-import { CheckCircle2, Clock, GitCommit, FileText, ArrowRight, ShieldCheck, Plus } from 'lucide-react';
+import { CheckCircle2, Clock, GitCommit, FileText, ArrowRight, ShieldCheck, Plus, ExternalLink } from 'lucide-react';
 
 export default function OpsSchemeDetail() {
   const { id } = useParams();
   const [scheme, setScheme] = useState(null);
-  const [ruleVersions, setRuleVersions] = useState([]);
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'rules' | 'provenance' | 'propose'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'rules' | 'propose'
 
   // Propose rule revision form state
-  const [newVersion, setNewVersion] = useState('1.1');
-  const [changeSummary, setChangeSummary] = useState('');
+  const [newVersion, setNewVersion] = useState('v1.1');
+  const [changeSummary, setChangeSummary] = useState('Updated annual income eligibility ceiling as per latest gazette amendment');
   const [rulesJson, setRulesJson] = useState('{\n  "income_limit": 250000,\n  "income_type": "household",\n  "occupation": ["farmer"],\n  "land_ownership": ["below_2_acres", "2_to_5_acres"],\n  "bank_account_required": true\n}');
-  const [sourceRef, setSourceRef] = useState('Ministry of Agriculture Gazette Notification No. 88/2026');
+  const [sourceRef, setSourceRef] = useState('Ministry Gazette Notification No. 104/2026');
   const [toast, setToast] = useState('');
 
   useEffect(() => {
     async function load() {
-      const s = await SchemeRegistryAPI.getRegistryScheme(id);
-      const rv = await SchemeRegistryAPI.getRuleVersions(id);
-      setScheme(s);
-      setRuleVersions(rv);
+      const all = await SchemesData.fetchAllSchemes();
+      const found = all.find(s => s.id === id || s.scheme_code?.toLowerCase() === id?.toLowerCase());
+      if (found) {
+        setScheme(found);
+        setRulesJson(JSON.stringify(found.rules || {}, null, 2));
+      }
     }
     load();
   }, [id]);
@@ -36,52 +38,52 @@ export default function OpsSchemeDetail() {
       return;
     }
 
-    const proposedItem = {
-      scheme_id: scheme.id,
-      queue_type: 'RULE_CHANGE',
-      priority: 'HIGH',
-      title: `Proposed Rule v${newVersion} for ${scheme.official_name}`,
-      proposed_changes: {
-        version: newVersion,
-        rules: parsed,
-        summary: changeSummary,
-        source: sourceRef
-      },
-      detection_source: 'Operations Console (Propose Revision)',
-      detection_url: 'https://egazette.gov.in',
-      status: 'PENDING'
-    };
+    try {
+      const updated = await SchemesData.updateSchemeVersion(scheme.id, {
+        rules: parsed
+      }, changeSummary);
 
-    await SchemeRegistryAPI.addToVerificationQueue(proposedItem);
-    setToast(`✓ Rule Revision v${newVersion} queued for Verification review!`);
-    setTimeout(() => setToast(''), 3500);
-    setActiveTab('rules');
+      setScheme(updated);
+      setToast(`✓ Rule Revision ${updated.rule_version} published to master registry with audit trail!`);
+      setTimeout(() => setToast(''), 4000);
+      setActiveTab('overview');
+    } catch (err) {
+      alert('Error updating version: ' + err.message);
+    }
   };
 
   if (!scheme) {
-    return <div className="ops-loading">Loading scheme registry details...</div>;
+    return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading scheme registry details...</div>;
   }
-
-  const statusClass = `ops-badge-${(scheme.lifecycle_status || 'published').toLowerCase().replace('_', '-')}`;
 
   return (
     <div>
-      <header className="ops-page-header">
-        <Link to="/operations/registry" style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', textDecoration: 'none', display: 'inline-block', marginBottom: '8px' }}>
+      <header className="ops-page-header" style={{ marginBottom: '1.5rem' }}>
+        <Link to="/operations/registry" style={{ color: 'var(--slate)', fontSize: '13px', textDecoration: 'none', display: 'inline-block', marginBottom: '8px' }}>
           ← Back to Master Scheme Registry
         </Link>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
           <div>
-            <h1 className="ops-page-title">{scheme.official_name}</h1>
-            <p className="ops-page-subtitle" style={{ fontFamily: 'var(--font-mono)' }}>
-              Code: <strong style={{ color: 'var(--brass-gold)' }}>{scheme.scheme_code}</strong> · {scheme.ministry}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <span style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--brass-gold)', fontWeight: 700 }}>
+                {scheme.scheme_code}
+              </span>
+              <span className="badge" style={{ background: 'var(--paper)', color: 'var(--slate)' }}>
+                Rule {scheme.rule_version || 'v1.0'}
+              </span>
+              <span className="badge badge-eligible">PUBLISHED</span>
+            </div>
+
+            <h1 className="ops-page-title" style={{ margin: '4px 0 8px 0' }}>{scheme.official_name || scheme.name}</h1>
+            <p className="ops-page-subtitle">
+              {scheme.ministry} · {scheme.state === 'All-India' ? 'Central Scheme' : `${scheme.state} State`}
             </p>
           </div>
+
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <span className={`ops-badge ${statusClass}`}>{scheme.lifecycle_status}</span>
             <button
               onClick={() => setActiveTab('propose')}
-              className="ops-btn ops-btn-primary ops-btn-sm"
+              className="btn btn-primary btn-sm"
               style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
             >
               <Plus size={14} /> Propose Rule Revision
@@ -91,181 +93,126 @@ export default function OpsSchemeDetail() {
       </header>
 
       {toast && (
-        <div className="ops-toast success" style={{ position: 'static', marginBottom: '20px' }}>
+        <div style={{ background: 'rgba(31,122,77,0.1)', color: 'var(--ledger-green)', padding: '12px 16px', borderRadius: '4px', border: '1px solid rgba(31,122,77,0.3)', marginBottom: '1.5rem', fontWeight: 600 }}>
           {toast}
         </div>
       )}
 
       {/* Tabs */}
-      <div className="ops-tabs">
-        <button className={`ops-tab ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')}>
-          Overview & Parameters
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '1.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
+        <button
+          className={`filter-chip ${activeTab === 'overview' ? 'active' : ''}`}
+          onClick={() => setActiveTab('overview')}
+        >
+          Administrative Overview
         </button>
-        <button className={`ops-tab ${activeTab === 'rules' ? 'active' : ''}`} onClick={() => setActiveTab('rules')}>
-          Rule Version Timeline ({ruleVersions.length})
+        <button
+          className={`filter-chip ${activeTab === 'rules' ? 'active' : ''}`}
+          onClick={() => setActiveTab('rules')}
+        >
+          Active Rule AST Specification
         </button>
-        <button className={`ops-tab ${activeTab === 'provenance' ? 'active' : ''}`} onClick={() => setActiveTab('provenance')}>
-          Gazette Provenance (Tier 1)
-        </button>
-        <button className={`ops-tab ${activeTab === 'propose' ? 'active' : ''}`} onClick={() => setActiveTab('propose')}>
-          + Propose Revision
+        <button
+          className={`filter-chip ${activeTab === 'propose' ? 'active' : ''}`}
+          onClick={() => setActiveTab('propose')}
+        >
+          Propose Policy Revision
         </button>
       </div>
 
+      {/* Tab 1: Overview */}
       {activeTab === 'overview' && (
-        <div>
-          <div className="ops-card">
-            <h3>Classification & Administrative Data</h3>
-            <div className="ops-field-grid">
-              <div className="ops-field">
-                <div className="ops-field-label">Scheme Code</div>
-                <div className="ops-field-value">{scheme.scheme_code}</div>
-              </div>
-              <div className="ops-field">
-                <div className="ops-field-label">Disbursement Type</div>
-                <div className="ops-field-value" style={{ textTransform: 'capitalize' }}>
-                  {(scheme.scheme_type || '').replace(/_/g, ' ')}
-                </div>
-              </div>
-              <div className="ops-field">
-                <div className="ops-field-label">Jurisdiction Level</div>
-                <div className="ops-field-value" style={{ textTransform: 'capitalize' }}>
-                  {scheme.gov_level}
-                </div>
-              </div>
-              <div className="ops-field">
-                <div className="ops-field-label">Nodal Ministry</div>
-                <div className="ops-field-value">{scheme.ministry || 'Government of India'}</div>
-              </div>
-              <div className="ops-field">
-                <div className="ops-field-label">Official Benefit Value</div>
-                <div className="ops-field-value">{scheme.benefits_summary || scheme.benefit}</div>
-              </div>
-              <div className="ops-field">
-                <div className="ops-field-label">Processing SLA</div>
-                <div className="ops-field-value">{scheme.processing_days || 30} Days (Average)</div>
-              </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '1.5rem' }}>
+          <div className="card" style={{ padding: '1.75rem' }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--ink-navy)', marginBottom: '1rem' }}>
+              Programme Entitlement Summary
+            </h3>
+            <p style={{ color: 'var(--slate)', fontSize: '0.9rem', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+              {scheme.description || 'Statutory entitlement benefit verified against official primary gazette notification.'}
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', background: 'var(--paper)', padding: '1.25rem', borderRadius: '6px', border: '1px solid var(--border)' }}>
+              <div><strong>Financial Quantum:</strong> {scheme.benefit}</div>
+              <div><strong>Category:</strong> <span style={{ textTransform: 'capitalize' }}>{scheme.category}</span></div>
+              <div><strong>Government Level:</strong> <span style={{ textTransform: 'capitalize' }}>{scheme.government_level}</span></div>
+              <div><strong>Target Beneficiary:</strong> {scheme.beneficiary_types?.join(', ') || 'Vulnerable Citizens'}</div>
             </div>
           </div>
 
-          <div className="ops-card">
-            <h3>Mandatory Required Document Proofs</h3>
-            <div className="ops-tags">
-              {(scheme.required_documents || scheme.documents || []).map((doc, idx) => (
-                <span key={idx} className="ops-tag">📄 {doc}</span>
-              ))}
+          <div className="card" style={{ padding: '1.75rem' }}>
+            <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--ink-navy)', marginBottom: '1rem' }}>
+              Gazette Provenance (Tier 1)
+            </h3>
+            <div style={{ fontSize: '0.85rem', color: 'var(--slate)', lineHeight: 1.6 }}>
+              <div><strong>Authority:</strong> {scheme.ministry}</div>
+              <div><strong>Provenance Tier:</strong> Primary Statutory Gazette</div>
+              <div><strong>Official Portal:</strong> <a href={scheme.official_url || '#'} target="_blank" rel="noreferrer" style={{ color: 'var(--seal-vermillion)' }}>{scheme.official_url || 'https://india.gov.in'}</a></div>
             </div>
           </div>
         </div>
       )}
 
+      {/* Tab 2: Rules AST */}
       {activeTab === 'rules' && (
-        <div className="ops-card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <h3 style={{ margin: 0 }}>Versioned Rule History (Deterministic Logic)</h3>
-            <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-mono)' }}>
-              Auto-selected by date in v_active_schemes
-            </span>
-          </div>
-
-          <div className="ops-timeline">
-            {ruleVersions.map(rv => (
-              <div key={rv.id} className="ops-timeline-item">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div className="ops-timeline-version">v{rv.version}</div>
-                  <span className="ops-badge ops-badge-verified">
-                    {rv.verification_status || 'VERIFIED'}
-                  </span>
-                </div>
-                <div className="ops-timeline-date">
-                  Effective: <strong>{rv.effective_from}</strong> → {rv.effective_until || 'Present (Active)'}
-                </div>
-                <div className="ops-timeline-summary">{rv.change_summary}</div>
-                <div className="ops-json" style={{ marginTop: '12px' }}>
-                  {JSON.stringify(rv.rules, null, 2)}
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="card" style={{ padding: '1.75rem' }}>
+          <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--ink-navy)', marginBottom: '8px' }}>
+            Active Rule AST Configuration (Rule {scheme.rule_version || 'v1.0'})
+          </h3>
+          <pre style={{ background: 'var(--paper)', padding: '1.25rem', borderRadius: '6px', border: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', overflowX: 'auto' }}>
+            {JSON.stringify(scheme.rules || scheme.ast_rules || {}, null, 2)}
+          </pre>
         </div>
       )}
 
-      {activeTab === 'provenance' && (
-        <div className="ops-card">
-          <h3>Official Source Provenance & Verification Tier</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '6px', borderLeft: '4px solid var(--ledger-green)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span style={{ fontWeight: 700, color: 'white' }}>TIER 1 // PRIMARY GOVERNMENT SOURCE</span>
-                <span className="ops-badge ops-badge-verified">VERIFIED SOURCE</span>
-              </div>
-              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
-                Source Authority: {scheme.ministry || 'Ministry of Agriculture and Farmers Welfare'}<br />
-                Reference: Extraordinary Gazette of India Notification No. 42-AGRI/2025<br />
-                Crawler Verification Hash: <code style={{ color: 'var(--brass-gold)', fontSize: '11px' }}>sha256:e88192a09b2c89...</code>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* Tab 3: Propose Revision */}
       {activeTab === 'propose' && (
-        <form onSubmit={handleProposeRevision} className="ops-card">
-          <h3>Propose Rule Revision (Pushes to Verification Queue)</h3>
-          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '13px', marginBottom: '1.5rem' }}>
-            Draft a new rule version with updated thresholds. Once reviewed and approved in the Verification Queue, it will automatically govern citizen matching with zero application downtime.
+        <div className="card" style={{ padding: '2rem' }}>
+          <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--ink-navy)', marginBottom: '8px' }}>
+            Propose Policy Version Increment
+          </h3>
+          <p style={{ color: 'var(--slate)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
+            Creating a revision will record an immutable policy version increment with an audit log.
           </p>
 
-          <div className="ops-grid-2">
-            <div className="ops-form-group">
-              <label>Proposed Version Tag *</label>
+          <form onSubmit={handleProposeRevision}>
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label className="form-label">Change Summary / Rationale</label>
               <input
                 type="text"
-                className="ops-input"
-                value={newVersion}
-                onChange={e => setNewVersion(e.target.value)}
+                className="form-input"
+                value={changeSummary}
+                onChange={e => setChangeSummary(e.target.value)}
                 required
               />
             </div>
-            <div className="ops-form-group">
-              <label>Official Source / Gazette Reference *</label>
-              <input
-                type="text"
-                className="ops-input"
-                value={sourceRef}
-                onChange={e => setSourceRef(e.target.value)}
-                required
+
+            <div className="form-group" style={{ marginBottom: '1.5rem' }}>
+              <label className="form-label">Updated Rule JSON Configuration</label>
+              <textarea
+                className="form-input"
+                style={{ minHeight: '180px', fontFamily: 'var(--font-mono)', fontSize: '0.85rem', background: 'var(--paper)' }}
+                value={rulesJson}
+                onChange={e => setRulesJson(e.target.value)}
               />
             </div>
-          </div>
 
-          <div className="ops-form-group">
-            <label>Change Summary / Gazette Clause Reference *</label>
-            <input
-              type="text"
-              className="ops-input"
-              placeholder="e.g. Revised annual income threshold from ₹2,00,000 to ₹2,50,000 per CCEA decision"
-              value={changeSummary}
-              onChange={e => setChangeSummary(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="ops-form-group">
-            <label>Structured Rules (JSON) *</label>
-            <textarea
-              className="ops-textarea"
-              style={{ minHeight: '180px', fontFamily: 'var(--font-mono)' }}
-              value={rulesJson}
-              onChange={e => setRulesJson(e.target.value)}
-              required
-            />
-          </div>
-
-          <button type="submit" className="ops-btn ops-btn-primary" style={{ padding: '12px 28px' }}>
-            Submit Revision to Verification Queue →
-          </button>
-        </form>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => setActiveTab('overview')}
+                className="btn btn-secondary btn-sm"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary btn-sm"
+              >
+                Publish Policy Revision →
+              </button>
+            </div>
+          </form>
+        </div>
       )}
     </div>
   );
