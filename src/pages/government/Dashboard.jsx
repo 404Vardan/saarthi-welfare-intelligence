@@ -61,14 +61,21 @@ export default function GovDashboard() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h1 className="gov-page-title" style={{ margin: 0 }}>National Welfare Command Center</h1>
-          <p className="gov-page-subtitle" style={{ margin: '4px 0 0 0' }}>
-            Real-time delivery telemetry across Central & State programmes.
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <h1 className="gov-page-title" style={{ margin: 0 }}>National Welfare Command Center</h1>
+            <span className="badge" style={{ background: 'rgba(31,122,77,0.2)', color: 'var(--ledger-green)', border: '1px solid rgba(31,122,77,0.4)', fontSize: '10px' }}>
+              ● LIVE RLS DATA
+            </span>
+          </div>
+          <p className="gov-page-subtitle" style={{ margin: 0 }}>
+            Real-time delivery telemetry combined with calibrated district demographic models.
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(31,122,77,0.15)', border: '1px solid rgba(31,122,77,0.3)', padding: '6px 12px', borderRadius: '20px', color: 'var(--ledger-green)', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>
-          <Radio size={14} className="animate-pulse" />
-          <span>WebSocket Realtime Active</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(31,122,77,0.15)', border: '1px solid rgba(31,122,77,0.3)', padding: '6px 12px', borderRadius: '20px', color: 'var(--ledger-green)', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>
+            <Radio size={14} className="animate-pulse" />
+            <span>WebSocket Gateway Active</span>
+          </div>
         </div>
       </div>
 

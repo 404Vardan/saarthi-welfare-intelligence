@@ -349,9 +349,87 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // ── Add household member & sync ──
+  // ── Citizen Saved Schemes State ──
+  const [savedSchemes, setSavedSchemes] = useState(() => {
+    try {
+      const saved = localStorage.getItem('saarthi_saved_schemes');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  // Fetch saved schemes from database on login
+  useEffect(() => {
+    if (!user?.id) return;
+    async function loadSavedSchemes() {
+      try {
+        const { data, error } = await supabase
+          .from('saved_schemes')
+          .select('scheme_id')
+          .eq('profile_id', user.id);
+
+        if (!error && data) {
+          const ids = data.map(s => s.scheme_id);
+          setSavedSchemes(ids);
+          localStorage.setItem('saarthi_saved_schemes', JSON.stringify(ids));
+        }
+      } catch (err) {
+        console.warn('[Saarthi] Failed to load saved schemes from DB:', err);
+      }
+    }
+    loadSavedSchemes();
+  }, [user?.id]);
+
+  // Toggle saving/bookmarking a scheme
+  const toggleSaveScheme = async (schemeId) => {
+    const isCurrentlySaved = savedSchemes.includes(schemeId);
+    const nextSaved = isCurrentlySaved
+      ? savedSchemes.filter(id => id !== schemeId)
+      : [...savedSchemes, schemeId];
+
+    setSavedSchemes(nextSaved);
+    localStorage.setItem('saarthi_saved_schemes', JSON.stringify(nextSaved));
+
+    if (user?.id) {
+      try {
+        if (isCurrentlySaved) {
+          await supabase
+            .from('saved_schemes')
+            .delete()
+            .eq('profile_id', user.id)
+            .eq('scheme_id', schemeId);
+        } else {
+          await supabase
+            .from('saved_schemes')
+            .insert({ profile_id: user.id, scheme_id: schemeId });
+        }
+      } catch (err) {
+        console.warn('[Saarthi] Saved scheme DB sync notice:', err.message);
+      }
+    }
+    return !isCurrentlySaved;
+  };
+
+  // ── Add household member & sync (Strict UUID validation) ──
   const addHouseholdMember = async (member) => {
-    const newMember = { id: 'hm-' + Date.now(), profile_id: user?.id, ...member };
+    const generatedId = (typeof crypto !== 'undefined' && crypto.randomUUID) 
+      ? crypto.randomUUID() 
+      : '00000000-0000-4000-8000-' + Date.now().toString(16).padStart(12, '0');
+
+    const newMember = { 
+      id: generatedId, 
+      profile_id: user?.id, 
+      name: member.name,
+      relation: member.relation,
+      age: member.age ? Number(member.age) : null,
+      gender: member.gender || 'other',
+      occupation: member.occupation || 'unemployed',
+      income_annual: member.income_annual ? Number(member.income_annual) : 0,
+      education: member.education || 'none',
+      disability: member.disability || 'none'
+    };
+
     const next = [...household, newMember];
     setHousehold(next);
     localStorage.setItem(LOCAL_HOUSEHOLD_KEY, JSON.stringify(next));
@@ -361,11 +439,15 @@ export function AuthProvider({ children }) {
 
     if (user?.id) {
       try {
-        await supabase.from('household_members').insert(newMember);
+        const { error } = await supabase.from('household_members').insert(newMember);
+        if (error) {
+          console.warn('[Saarthi Auth] Household member DB insert error:', error.message);
+        }
       } catch (err) {
-        console.error('[Saarthi] Household member sync failed:', err.message);
+        console.error('[Saarthi Auth] Household member sync failed:', err.message);
       }
     }
+    return newMember;
   };
 
   // ── Remove household member & sync ──
@@ -379,9 +461,12 @@ export function AuthProvider({ children }) {
 
     if (user?.id) {
       try {
-        await supabase.from('household_members').delete().eq('id', id);
+        const { error } = await supabase.from('household_members').delete().eq('id', id);
+        if (error) {
+          console.warn('[Saarthi Auth] Household member DB delete error:', error.message);
+        }
       } catch (err) {
-        console.error('[Saarthi] Household member delete failed:', err.message);
+        console.error('[Saarthi Auth] Household member delete failed:', err.message);
       }
     }
   };
@@ -480,6 +565,8 @@ export function AuthProvider({ children }) {
       profile,
       household,
       schemes,
+      savedSchemes,
+      toggleSaveScheme,
       evaluations,
       applications,
       documents,

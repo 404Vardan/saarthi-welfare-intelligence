@@ -52,6 +52,7 @@ export const EligibilityEngine = {
 
   /**
    * Evaluates a single rule node against context
+   * Uses 3-Valued Logic: PASSED | FAILED | INSUFFICIENT_DATA
    */
   evaluateNode(node, context) {
     // 1. AST Combinator Node (AND / OR / NOT)
@@ -60,34 +61,55 @@ export const EligibilityEngine = {
       const children = (node.rules || []).map(child => this.evaluateNode(child, context));
 
       if (combinator === 'AND') {
-        const passed = children.every(c => c.passed);
+        const hasMissing = children.some(c => c.status === 'insufficient_data');
+        const anyFailed = children.some(c => c.status === 'failed');
+        const passed = children.every(c => c.status === 'passed');
+
+        let groupStatus = 'passed';
+        if (anyFailed) groupStatus = 'failed';
+        else if (hasMissing) groupStatus = 'insufficient_data';
+
         return {
           type: 'group',
           combinator: 'AND',
-          label: node.label || 'All Conditions Must Be Met',
-          passed,
+          label: node.label || 'All Statutory Conditions Required',
+          status: groupStatus,
+          passed: groupStatus === 'passed',
           children
         };
       }
 
       if (combinator === 'OR') {
-        const passed = children.some(c => c.passed);
+        const anyPassed = children.some(c => c.status === 'passed');
+        const allFailed = children.every(c => c.status === 'failed');
+
+        let groupStatus = 'failed';
+        if (anyPassed) groupStatus = 'passed';
+        else if (!allFailed) groupStatus = 'insufficient_data';
+
         return {
           type: 'group',
           combinator: 'OR',
           label: node.label || 'At Least One Condition Must Be Met',
-          passed,
+          status: groupStatus,
+          passed: groupStatus === 'passed',
           children
         };
       }
 
       if (combinator === 'NOT') {
-        const child = children[0] || { passed: false };
+        const child = children[0] || { status: 'failed', passed: false };
+        let groupStatus = 'failed';
+        if (child.status === 'passed') groupStatus = 'failed';
+        else if (child.status === 'failed') groupStatus = 'passed';
+        else groupStatus = 'insufficient_data';
+
         return {
           type: 'group',
           combinator: 'NOT',
           label: node.label || 'Condition Must Not Be Met',
-          passed: !child.passed,
+          status: groupStatus,
+          passed: groupStatus === 'passed',
           children
         };
       }
@@ -96,6 +118,28 @@ export const EligibilityEngine = {
     // 2. Leaf Predicate Node
     const { field, op = 'EQ', value: targetValue, label, impact = 'critical', tolerance = 0 } = node;
     const citizenValue = this.resolveField(context, field);
+
+    // 3-Valued Check: Is the required citizen attribute missing or undefined?
+    const isMissing = (citizenValue === undefined || citizenValue === null || citizenValue === '');
+
+    if (isMissing) {
+      return {
+        type: 'predicate',
+        field,
+        op: String(op).toUpperCase(),
+        label: label || this.formatFieldLabel(field),
+        impact,
+        status: 'insufficient_data',
+        passed: false,
+        nearMiss: false,
+        delta: null,
+        isMissingData: true,
+        citizenValue: 'Missing / Not Provided',
+        requiredValue: this.formatRequirement(String(op).toUpperCase(), targetValue),
+        rawCitizenValue: undefined,
+        rawTargetValue: targetValue
+      };
+    }
 
     let passed = false;
     let nearMiss = false;
@@ -115,17 +159,19 @@ export const EligibilityEngine = {
         const allowableDelta = tolerance || targetValue * 0.15; // 15% tolerance default
         if (diff > 0 && diff <= allowableDelta) {
           nearMiss = true;
-          delta = `Exceeds by ${diff}`;
+          delta = `Exceeds ceiling by ₹${diff.toLocaleString('en-IN')}`;
         }
       } else if (['GTE', 'GT'].includes(opKey)) {
         const diff = targetValue - citizenValue;
         const allowableDelta = tolerance || 2; // e.g. 2 years age
         if (diff > 0 && diff <= allowableDelta) {
           nearMiss = true;
-          delta = `Short by ${diff}`;
+          delta = `Short by ${diff} units`;
         }
       }
     }
+
+    const nodeStatus = passed ? 'passed' : 'failed';
 
     return {
       type: 'predicate',
@@ -133,9 +179,11 @@ export const EligibilityEngine = {
       op: opKey,
       label: label || this.formatFieldLabel(field),
       impact,
+      status: nodeStatus,
       passed: Boolean(passed),
       nearMiss,
       delta,
+      isMissingData: false,
       citizenValue: this.formatValue(field, citizenValue),
       requiredValue: this.formatRequirement(opKey, targetValue),
       rawCitizenValue: citizenValue,
@@ -404,14 +452,45 @@ export const EligibilityEngine = {
   },
 
   /**
+   * Computes household aggregate income without double counting
+   */
+  computeHouseholdIncome(citizen, householdMembers = []) {
+    const citizenIncome = (citizen?.income_annual !== undefined && citizen?.income_annual !== null && citizen?.income_annual !== '')
+      ? Number(citizen.income_annual)
+      : undefined;
+
+    let memberTotal = 0;
+    let hasMemberIncome = false;
+
+    (householdMembers || []).forEach(m => {
+      if (m.income_annual !== undefined && m.income_annual !== null && m.income_annual !== '') {
+        memberTotal += Number(m.income_annual);
+        hasMemberIncome = true;
+      }
+    });
+
+    if (citizenIncome === undefined && !hasMemberIncome) {
+      return undefined;
+    }
+
+    // If household members have declared incomes, sum citizen's personal income with members
+    // Otherwise fallback to citizen's self-reported household income
+    return (citizenIncome || 0) + memberTotal;
+  },
+
+  /**
    * Evaluates a full Scheme against a Citizen Profile + Household + Documents Context
    */
   evaluateScheme(citizen = {}, householdMembers = [], scheme = {}, citizenDocuments = []) {
     const context = {
       citizen: {
         ...citizen,
-        income_annual: Number(citizen?.income_annual || 0),
-        age: Number(citizen?.age || 0)
+        income_annual: (citizen?.income_annual !== undefined && citizen?.income_annual !== null && citizen?.income_annual !== '')
+          ? Number(citizen.income_annual)
+          : undefined,
+        age: (citizen?.age !== undefined && citizen?.age !== null && citizen?.age !== '')
+          ? Number(citizen.age)
+          : undefined
       },
       household: {
         income_annual: this.computeHouseholdIncome(citizen, householdMembers),
@@ -437,13 +516,17 @@ export const EligibilityEngine = {
     let passedWeight = 0;
     let criticalFails = 0;
     let moderateFails = 0;
+    let missingDataCount = 0;
     let hasNearMiss = false;
 
     flatBreakdown.forEach(b => {
       const weight = b.impact === 'critical' ? 2 : 1;
       totalWeight += weight;
+
       if (b.status === 'passed') {
         passedWeight += weight;
+      } else if (b.status === 'insufficient_data') {
+        missingDataCount++;
       } else {
         if (b.impact === 'critical') criticalFails++;
         else moderateFails++;
@@ -454,11 +537,13 @@ export const EligibilityEngine = {
     // Check Documents
     const docEval = this.evaluateDocuments(citizenDocuments, scheme.documents || scheme.required_documents || []);
 
-    // Determine Final Status
+    // Determine Final Status with 3-Valued Precision
     let status = 'eligible';
     const totalFails = criticalFails + moderateFails;
 
-    if (totalFails === 0) {
+    if (missingDataCount > 0 && totalFails === 0) {
+      status = 'insufficient_data';
+    } else if (totalFails === 0 && missingDataCount === 0) {
       status = 'eligible';
     } else if (criticalFails === 0 && moderateFails <= 1) {
       status = 'nearly_eligible';
@@ -474,7 +559,11 @@ export const EligibilityEngine = {
       ? Math.round((passedWeight / totalWeight) * 100)
       : 100;
 
+    const schemeTag = (scheme.short_name || scheme.scheme_code || 'SCH').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    const decisionId = `DEC-${schemeTag}-${Date.now().toString(36).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+
     return {
+      decisionId,
       schemeId: scheme.id,
       schemeCode: scheme.scheme_code || scheme.short_name,
       schemeName: scheme.name || scheme.official_name,
@@ -487,6 +576,7 @@ export const EligibilityEngine = {
       department: scheme.department,
       status,
       matchPercentage,
+      missingDataCount,
       ruleBreakdown: flatBreakdown,
       astResult,
       documents: docEval.docStatus,

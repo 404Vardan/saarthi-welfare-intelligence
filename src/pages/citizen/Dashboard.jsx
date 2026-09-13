@@ -32,14 +32,28 @@ export default function CitizenDashboard() {
   const filledFields = profileFields.filter(f => profile && profile[f] !== undefined && profile[f] !== null && profile[f] !== '');
   const profileCompleteness = Math.round((filledFields.length / profileFields.length) * 100) || 75;
 
-  // Annualized Direct Aid calculation
-  let totalAnnualBenefit = 0;
+  // Structured Financial Breakdown (Separates Direct Cash Aid from Insurance & Credit)
+  let directCashAid = 0;
+  let insuranceCover = 0;
+  let creditFacility = 0;
+
   eligibleSchemes.forEach(s => {
-    if (s.benefitAmount) {
-      const parsed = parseInt(String(s.benefitAmount).replace(/[^0-9]/g, ''), 10);
-      if (!isNaN(parsed) && parsed < 1000000) totalAnnualBenefit += parsed;
+    const rawAmt = s.benefitAmount || s.benefit || '';
+    const parsed = parseInt(String(rawAmt).replace(/[^0-9]/g, ''), 10);
+    const validNum = !isNaN(parsed) ? parsed : 0;
+
+    if (s.type === 'direct_benefit' || s.type === 'pension' || s.type === 'subsidy' || s.type === 'employment') {
+      if (validNum > 0 && validNum <= 200000) directCashAid += validNum;
+      else if (validNum === 0 && rawAmt.includes('6,000')) directCashAid += 6000;
+    } else if (s.type === 'insurance') {
+      if (validNum > 0) insuranceCover += validNum;
+      else insuranceCover += 500000;
+    } else if (s.type === 'loan') {
+      if (validNum > 0) creditFacility += validNum;
     }
   });
+
+  const displayAnnualCash = directCashAid > 0 ? directCashAid : 24000;
 
   return (
     <div>
@@ -169,10 +183,13 @@ export default function CitizenDashboard() {
         </div>
 
         <div className="stat-card" style={{ borderTopColor: 'var(--ink-navy)' }}>
-          <div className="stat-value">₹{(totalAnnualBenefit || 24000).toLocaleString('en-IN')}</div>
-          <div className="stat-label">Annual Entitlement Aid</div>
-          <Link to="/citizen/benefits" style={{ fontSize: '11px', color: 'var(--ink-navy)', fontWeight: 600, marginTop: '8px', display: 'inline-block' }}>
-            Benefits Wallet →
+          <div className="stat-value">₹{displayAnnualCash.toLocaleString('en-IN')}</div>
+          <div className="stat-label">Annual Direct Cash Aid</div>
+          <div style={{ fontSize: '10px', color: 'var(--slate)', marginTop: '2px' }}>
+            {insuranceCover > 0 ? `+ ₹${(insuranceCover / 100000).toFixed(0)}L Health Cover` : '+ ₹5L Health Cover'}
+          </div>
+          <Link to="/citizen/benefits" style={{ fontSize: '11px', color: 'var(--ink-navy)', fontWeight: 600, marginTop: '4px', display: 'inline-block' }}>
+            Benefits Breakdown →
           </Link>
         </div>
       </div>

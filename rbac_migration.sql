@@ -156,12 +156,19 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
--- Only admins can read audit logs
+-- Only admins can read all audit logs, users can read their own
 CREATE POLICY "admins_read_audit_logs" ON audit_logs
   FOR SELECT USING (
     auth.uid() IN (SELECT user_id FROM user_roles WHERE role = 'admin')
+    OR auth.uid() = user_id
   );
 
--- Any authenticated user's actions can be logged (via service role)
-CREATE POLICY "service_insert_audit_logs" ON audit_logs
-  FOR INSERT WITH CHECK (true);
+-- Authenticated callers can only insert logs stamped with their own UID, or admins
+CREATE POLICY "authenticated_insert_own_audit_logs" ON audit_logs
+  FOR INSERT WITH CHECK (
+    auth.uid() = user_id
+    OR auth.uid() IN (SELECT user_id FROM user_roles WHERE role = 'admin')
+  );
+
+-- Audit logs are strictly immutable: no UPDATE or DELETE permitted
+-- (Omission of UPDATE/DELETE policies enforces denial by default in PostgreSQL RLS)

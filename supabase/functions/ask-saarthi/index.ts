@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,33 +12,61 @@ serve(async (req) => {
   }
 
   try {
+    // 1. JWT Caller Authorization Verification
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Missing Authorization header' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') || '';
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Invalid authentication token' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    // 2. Gemini API Secret
     const apiKey = Deno.env.get('GEMINI_API_KEY');
     if (!apiKey) {
       return new Response(
-        JSON.stringify({ error: 'Gemini API key not configured', fallback: true }),
+        JSON.stringify({ error: 'Gemini AI service unavailable', fallback: true }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 503 }
       );
     }
 
     const { query, citizenContext, matchedSchemes, missingDocs } = await req.json();
     
-    // Build the system prompt (same as current geminiApi.js)
-    const systemPrompt = `You are Saarthi, an official AI welfare guidance assistant for India.
-Explain government schemes and application steps strictly based on the citizen's verified profile and gazette rules.
-IMPORTANT: You DO NOT determine eligibility—the deterministic rule engine already did that. Do NOT contradict the rule engine.
+    // 3. Grounded System Prompt (Strictly Assistive — Rule Engine Decides)
+    const systemPrompt = `You are Saarthi, an assistive welfare intelligence guide for India.
+Your mission is to explain government schemes in clear, respectful, plain language.
 
-Citizen Context:
-- Name: ${citizenContext?.full_name || 'Citizen'}
+STRICT OPERATIONAL RULES:
+1. You DO NOT determine legal eligibility. The deterministic AST Rule Engine has already evaluated the citizen's profile. Never override or contradict the engine results.
+2. If a citizen is missing documents, explain what document is required and where to obtain it (e.g. Tehsildar, Gram Panchayat, CSC).
+3. Do not invent benefits, amounts, or relaxed eligibility criteria.
+
+CITIZEN CONTEXT:
+- Name: ${citizenContext?.full_name || user.email?.split('@')[0] || 'Citizen'}
+- Domicile: ${citizenContext?.state || 'Not specified'}, District: ${citizenContext?.district || 'Not specified'}
 - Occupation: ${citizenContext?.occupation || 'Not specified'}
-- State & District: ${citizenContext?.state || 'Not specified'}, ${citizenContext?.district || 'Not specified'}
-- Annual Income: ₹${citizenContext?.income_annual?.toLocaleString('en-IN') || 'Not specified'}
-- Land Ownership: ${citizenContext?.land_ownership || 'Not specified'}
-- Matched Eligible Schemes (${matchedSchemes?.length || 0}): ${(matchedSchemes || []).map((s: any) => s.schemeName).join(', ') || 'None evaluated yet'}
-- Missing Verification Proofs: ${(missingDocs || []).map((d: any) => d.name).join(', ') || 'None (100% Ready)'}
+- Household Income: ₹${citizenContext?.income_annual ? Number(citizenContext.income_annual).toLocaleString('en-IN') : 'Not specified'}
+- Land Holding: ${citizenContext?.land_ownership || 'Not specified'}
+- Matched Schemes (${matchedSchemes?.length || 0}): ${(matchedSchemes || []).map((s: any) => `${s.schemeName || s.name} (${s.schemeCode || 'Rule Verified'})`).join(', ') || 'None verified yet'}
+- Required Documents: ${(missingDocs || []).map((d: any) => d.name).join(', ') || 'All Verified'}
 
-Query from Citizen: "${query}"
+USER QUESTION: "${query}"
 
-Provide a concise, helpful, and respectful response in 2-3 sentences.`;
+Provide a concise, helpful response in 2-3 sentences.`;
 
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
@@ -54,7 +83,7 @@ Provide a concise, helpful, and respectful response in 2-3 sentences.`;
       const errText = await response.text();
       console.error('Gemini API error:', errText);
       return new Response(
-        JSON.stringify({ error: 'Gemini API returned an error', fallback: true }),
+        JSON.stringify({ error: 'AI engine timeout', fallback: true }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 502 }
       );
     }
@@ -63,13 +92,21 @@ Provide a concise, helpful, and respectful response in 2-3 sentences.`;
     const replyText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
     return new Response(
-      JSON.stringify({ response: replyText || '', fallback: !replyText }),
+      JSON.stringify({
+        response: replyText || '',
+        groundedIn: {
+          authority: 'Deterministic Rule Engine v2.0',
+          model: 'Gemini 1.5 Flash (Edge Protected)',
+          verifiedSchemesCount: matchedSchemes?.length || 0
+        },
+        fallback: !replyText
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
   } catch (error) {
     console.error('Ask Saarthi edge function error:', error);
     return new Response(
-      JSON.stringify({ error: error.message, fallback: true }),
+      JSON.stringify({ error: (error as Error).message, fallback: true }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }

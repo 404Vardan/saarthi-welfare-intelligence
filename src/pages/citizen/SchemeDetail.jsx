@@ -9,10 +9,9 @@ export default function CitizenSchemeDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { schemes } = useSchemes();
-  const { profile, evaluations, applyForScheme, applications } = useAuth();
+  const { profile, evaluations, applyForScheme, applications, savedSchemes, toggleSaveScheme, documents } = useAuth();
 
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'eligibility' | 'documents' | 'application' | 'provenance'
-  const [isSaved, setIsSaved] = useState(false);
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
   const [notes, setNotes] = useState('');
   const [appliedSuccess, setAppliedSuccess] = useState(null);
@@ -20,6 +19,7 @@ export default function CitizenSchemeDetail() {
   const scheme = schemes.find(s => s.id === id || s.scheme_code?.toLowerCase() === id?.toLowerCase());
   const evaluation = evaluations.find(e => e.schemeId === id || e.schemeCode?.toLowerCase() === id?.toLowerCase());
   const hasApplied = applications.some(a => a.schemeId === id);
+  const isSaved = savedSchemes.includes(scheme?.id);
 
   if (!scheme) {
     return (
@@ -39,11 +39,13 @@ export default function CitizenSchemeDetail() {
   };
 
   const isEligible = evaluation?.status === 'eligible';
+  const isNearlyEligible = evaluation?.status === 'nearly_eligible';
+  const isMissingData = evaluation?.status === 'insufficient_data';
 
   return (
     <div>
       {/* Header Dossier */}
-      <div className="card" style={{ marginBottom: '1.5rem', background: '#FFFDF9', borderLeft: `6px solid ${isEligible ? 'var(--ledger-green)' : 'var(--brass-gold)'}` }}>
+      <div className="card" style={{ marginBottom: '1.5rem', background: '#FFFDF9', borderLeft: `6px solid ${isEligible ? 'var(--ledger-green)' : (isNearlyEligible ? 'var(--brass-gold)' : (isMissingData ? 'var(--slate)' : 'var(--seal-vermillion)'))}` }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
@@ -54,7 +56,7 @@ export default function CitizenSchemeDetail() {
                 {scheme.type || scheme.scheme_type || 'Direct Benefit'}
               </span>
               <span className="badge" style={{ background: 'var(--paper)', color: 'var(--slate)' }}>
-                Rule {scheme.version || 'v1.0'}
+                Rule {scheme.version || scheme.rule_version || 'v1.0'}
               </span>
             </div>
 
@@ -71,12 +73,12 @@ export default function CitizenSchemeDetail() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-end' }}>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button
-                onClick={() => setIsSaved(!isSaved)}
+                onClick={() => toggleSaveScheme(scheme.id)}
                 className="btn btn-secondary btn-sm"
                 style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
               >
                 <Bookmark size={14} color={isSaved ? 'var(--seal-vermillion)' : 'currentColor'} fill={isSaved ? 'var(--seal-vermillion)' : 'none'} />
-                {isSaved ? 'Saved' : 'Save'}
+                {isSaved ? 'Bookmarked' : 'Save Scheme'}
               </button>
 
               <Link
@@ -209,30 +211,56 @@ export default function CitizenSchemeDetail() {
 
       {activeTab === 'eligibility' && (
         <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--ink-navy)', margin: 0 }}>
-              Deterministic Rule Breakdown
-            </h3>
-            <span className={`badge ${isEligible ? 'badge-eligible' : 'badge-nearly'}`} style={{ fontFamily: 'var(--font-mono)' }}>
-              {isEligible ? '✓ Verified Eligible' : 'Action Required'}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
+            <div>
+              <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--ink-navy)', margin: 0 }}>
+                Deterministic Rule Breakdown
+              </h3>
+              <div style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: 'var(--slate)', marginTop: '4px' }}>
+                Decision Reference: {evaluation?.decisionId || 'DEC-AST-VERIFIED'}
+              </div>
+            </div>
+            <span
+              className="badge"
+              style={{
+                fontFamily: 'var(--font-mono)',
+                background: isEligible ? 'rgba(34,139,34,0.12)' : (isNearlyEligible ? 'rgba(212,160,23,0.12)' : (isMissingData ? 'rgba(100,116,139,0.12)' : 'rgba(193,68,45,0.12)')),
+                color: isEligible ? '#228B22' : (isNearlyEligible ? '#B45309' : (isMissingData ? '#475569' : '#C1442D')),
+                border: '1px solid currentColor'
+              }}
+            >
+              {isEligible ? '✓ Statutory Criteria Met' : (isNearlyEligible ? '⚡ Near-Miss (Advisory)' : (isMissingData ? '⚠️ Missing Profile Attributes' : '✗ Criteria Not Met'))}
             </span>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {(evaluation?.ruleBreakdown || [
-              { rule: 'Annual Income Ceiling', passed: true, citizenValue: `₹${profile?.income_annual?.toLocaleString('en-IN')}`, requiredValue: '<= ₹2,00,000' },
-              { rule: 'Occupation Type', passed: true, citizenValue: profile?.occupation, requiredValue: 'Farmer' },
-              { rule: 'Bank Account Linked', passed: true, citizenValue: 'Yes', requiredValue: 'DBT-Seeded' }
+              { rule: 'Annual Income Ceiling', passed: true, status: 'passed', citizenValue: `₹${profile?.income_annual?.toLocaleString('en-IN')}`, requiredValue: '<= ₹2,00,000' },
+              { rule: 'Occupation Type', passed: true, status: 'passed', citizenValue: profile?.occupation, requiredValue: 'Farmer' },
+              { rule: 'Bank Account Linked', passed: true, status: 'passed', citizenValue: 'Yes', requiredValue: 'DBT-Seeded' }
             ]).map((r, idx) => (
               <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: 'var(--paper)', borderRadius: '4px', border: '1px solid var(--border)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {r.passed ? <CheckCircle size={16} color="var(--ledger-green)" /> : <AlertTriangle size={16} color="var(--amber)" />}
+                  {r.status === 'passed' ? (
+                    <CheckCircle size={16} color="var(--ledger-green)" />
+                  ) : r.status === 'insufficient_data' ? (
+                    <AlertTriangle size={16} color="var(--slate)" />
+                  ) : (
+                    <XCircle size={16} color="var(--seal-vermillion)" />
+                  )}
                   <span style={{ fontWeight: 600, color: 'var(--ink-navy)', fontSize: '0.85rem' }}>{r.rule}:</span>
                   <span style={{ fontSize: '0.85rem', color: 'var(--slate)' }}>Requires {r.requiredValue}</span>
                 </div>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: r.passed ? 'var(--ledger-green)' : 'var(--amber)' }}>
-                  Your value: {r.citizenValue}
-                </span>
+                <div style={{ textAlign: 'right' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: r.status === 'passed' ? 'var(--ledger-green)' : (r.status === 'insufficient_data' ? 'var(--slate)' : 'var(--seal-vermillion)') }}>
+                    {r.citizenValue}
+                  </span>
+                  {r.nearMiss && (
+                    <div style={{ fontSize: '10px', color: 'var(--brass-gold)', fontWeight: 600 }}>
+                      Near-miss: {r.delta}
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -251,15 +279,36 @@ export default function CitizenSchemeDetail() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {(scheme.documents || ['Aadhaar Card (e-KYC)', 'Bank Passbook (DBT Linked)', 'Land Record (7/12 RoR)']).map((doc, idx) => (
-              <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--paper)', borderRadius: '4px', border: '1px solid var(--border)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <FileText size={18} color="var(--brass-gold)" />
-                  <span style={{ fontWeight: 600, color: 'var(--ink-navy)', fontSize: '0.9rem' }}>{doc}</span>
+            {(scheme.documents || ['Aadhaar Card (UIDAI e-KYC)', 'Bank Passbook (DBT Linked)', 'Land Record (7/12 RoR)']).map((docName, idx) => {
+              const matchingUserDoc = documents.find(d => d.name?.toLowerCase().includes(docName.toLowerCase()) || docName.toLowerCase().includes(d.name?.toLowerCase()));
+              const isPresent = !!matchingUserDoc;
+              const docStatus = matchingUserDoc?.status || 'missing';
+
+              return (
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--paper)', borderRadius: '4px', border: '1px solid var(--border)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <FileText size={18} color="var(--brass-gold)" />
+                    <div>
+                      <span style={{ fontWeight: 600, color: 'var(--ink-navy)', fontSize: '0.9rem' }}>{docName}</span>
+                      {matchingUserDoc && (
+                        <div style={{ fontSize: '11px', color: 'var(--slate)' }}>
+                          File: {matchingUserDoc.docNumber || 'Proof in Vault'}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <span
+                    className="badge"
+                    style={{
+                      background: isPresent ? (docStatus === 'verified' ? 'rgba(34,139,34,0.1)' : 'rgba(212,160,23,0.1)') : 'rgba(193,68,45,0.1)',
+                      color: isPresent ? (docStatus === 'verified' ? '#228B22' : '#B45309') : '#C1442D'
+                    }}
+                  >
+                    {isPresent ? (docStatus === 'verified' ? '✓ Authority Verified' : 'Uploaded (Pending Review)') : 'Missing from Vault'}
+                  </span>
                 </div>
-                <span className="badge badge-eligible">Verified in Vault</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

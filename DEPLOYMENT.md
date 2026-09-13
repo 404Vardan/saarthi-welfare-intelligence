@@ -1,6 +1,6 @@
-# SAARTHI 1.0 — Production Deployment & Architecture Guide
+# SAARTHI 2.0 — Production Deployment & Architecture Runbook
 
-This document outlines the complete deployment runbook to deploy **Saarthi Welfare Intelligence** to production (Vercel / Netlify / Custom Domain) backed by Supabase and Gemini AI.
+This document outlines the complete deployment runbook to deploy **Saarthi Welfare Intelligence Platform v2.0** to production (Vercel / Netlify / Custom Domain) backed by Supabase PostgreSQL RLS and Gemini AI Edge Proxy.
 
 ---
 
@@ -10,18 +10,18 @@ This document outlines the complete deployment runbook to deploy **Saarthi Welfa
                  INTERNET
                     │
                     ▼
-           SAARTHI WEB APP
-      (Vercel / Netlify / Custom Domain)
+           SAARTHI WEB APP (v2.0)
+      (Vercel / Cloudflare / Netlify)
                     │
           ┌─────────┴─────────┐
           ▼                   ▼
-      Supabase          Gemini 2.5 API
+      Supabase          Gemini 1.5 Flash
    (PostgreSQL + RLS)  (via Edge Function)
           │
    ┌──────┼────────┐
    ▼      ▼        ▼
  Database Auth  Storage
- (Tables) (RBAC) (Locker)
+ (Tables) (RBAC) (Private)
 ```
 
 ---
@@ -31,13 +31,12 @@ This document outlines the complete deployment runbook to deploy **Saarthi Welfa
 Create a `.env` file (or set environment variables in your hosting provider):
 
 ```env
-# Supabase Production Project URL & Anonymous Public Key
+# Supabase Production Project URL & Anonymous Public Key (Frontend Safe)
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-
-# Serverless Edge Proxy for Gemini (Optional local fallback)
-VITE_GEMINI_API_KEY=your_gemini_api_key_here
 ```
+
+> **Security Notice**: Gemini API keys are configured exclusively on the backend via `supabase secrets set GEMINI_API_KEY=...` and are NEVER bundled into client frontend code.
 
 ---
 

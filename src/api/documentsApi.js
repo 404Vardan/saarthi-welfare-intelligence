@@ -100,21 +100,43 @@ export const DocumentsAPI = {
           .eq('profile_id', profileId)
           .order('uploaded_at', { ascending: false });
 
-        if (!error && data && data.length > 0) {
-          return data.map(d => ({
-            id: d.id,
-            name: d.name,
-            category: d.category || 'identity',
-            docNumber: d.document_number || 'DOC-VERIFIED',
-            type: d.file_type || 'application/pdf',
-            status: d.status || 'verified',
-            size: d.file_size ? `${(d.file_size / 1024 / 1024).toFixed(1)} MB` : '1.2 MB',
-            fileUrl: d.file_url || '#',
-            uploadedAt: new Date(d.uploaded_at || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
-            expiryDate: d.expiry_date || null,
-            daysToExpiry: d.expiry_date ? Math.ceil((new Date(d.expiry_date) - new Date()) / (1000 * 60 * 60 * 24)) : null,
-            issuingAuthority: d.issuing_authority || 'Official Issuing Authority'
+        if (error) {
+          console.warn('[DocumentsAPI] Database query notice:', error.message);
+        } else if (data && data.length > 0) {
+          // Generate time-limited signed URLs for each private document
+          const docsWithSignedUrls = await Promise.all(data.map(async (d) => {
+            let secureUrl = '#';
+            if (d.file_url && d.file_url !== '#') {
+              try {
+                // If it's stored in Supabase private bucket, generate 1-hour signed URL
+                const pathParts = d.file_url.split('/documents/');
+                const relativePath = pathParts.length > 1 ? pathParts[1] : d.file_url;
+                const { data: signedData } = await supabase.storage
+                  .from('documents')
+                  .createSignedUrl(relativePath, 3600);
+                if (signedData?.signedUrl) secureUrl = signedData.signedUrl;
+              } catch {
+                secureUrl = d.file_url;
+              }
+            }
+
+            return {
+              id: d.id,
+              name: d.name,
+              category: d.category || 'identity',
+              docNumber: d.document_number || 'DOC-PENDING',
+              type: d.file_type || 'application/pdf',
+              status: d.status || 'uploaded',
+              size: d.file_size ? `${(d.file_size / 1024 / 1024).toFixed(1)} MB` : '1.2 MB',
+              fileUrl: secureUrl,
+              uploadedAt: new Date(d.uploaded_at || Date.now()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+              expiryDate: d.expiry_date || null,
+              daysToExpiry: d.expiry_date ? Math.ceil((new Date(d.expiry_date) - new Date()) / (1000 * 60 * 60 * 24)) : null,
+              issuingAuthority: d.issuing_authority || 'Official Issuing Authority'
+            };
           }));
+
+          return docsWithSignedUrls;
         }
       }
     } catch (err) {
@@ -138,71 +160,78 @@ export const DocumentsAPI = {
     const fileName = fileObj.name || 'Uploaded_Proof.pdf';
     const fileSizeFormatted = fileObj.size ? `${(fileObj.size / 1024 / 1024).toFixed(1)} MB` : '1.5 MB';
     const cleanDocName = metadata.name || fileName.replace(/\.[^/.]+$/, '');
-    let uploadedFileUrl = '#';
+    let storageFilePath = null;
+    let signedUrl = '#';
 
-    // 1. Attempt upload to Supabase Storage bucket 'documents'
+    // 1. Upload to Supabase Storage private bucket 'documents'
     try {
       if (profileId && profileId !== 'demo-citizen-01') {
-        const storagePath = `${profileId}/${Date.now()}_${fileName}`;
+        storageFilePath = `${profileId}/${Date.now()}_${fileName}`;
         const { data: storageData, error: storageError } = await supabase.storage
           .from('documents')
-          .upload(storagePath, fileObj, { upsert: true });
+          .upload(storageFilePath, fileObj, { upsert: true });
 
-        if (!storageError && storageData) {
-          const { data: publicUrlData } = supabase.storage
+        if (storageError) {
+          console.warn('[DocumentsAPI] Storage upload notice:', storageError.message);
+        } else if (storageData) {
+          const { data: signedData } = await supabase.storage
             .from('documents')
-            .getPublicUrl(storagePath);
-          uploadedFileUrl = publicUrlData?.publicUrl || '#';
+            .createSignedUrl(storageFilePath, 3600); // 1-hour secure URL
+          signedUrl = signedData?.signedUrl || '#';
         }
       }
     } catch (storageErr) {
-      console.warn('Supabase storage upload bypassed/offline, saving local record:', storageErr);
+      console.warn('Supabase storage upload offline, storing metadata locally:', storageErr);
     }
 
-    // 2. Metadata record
+    // 2. Metadata record — status is 'uploaded' (or 'under_review'), NEVER auto-'verified'
     const newDocRecord = {
-      id: 'doc-' + Date.now(),
+      id: crypto.randomUUID ? crypto.randomUUID() : 'doc-' + Date.now(),
       name: cleanDocName,
       category: metadata.category || 'user_upload',
       docNumber: metadata.docNumber || `DOC-${Math.floor(100000 + Math.random() * 900000)}`,
       type: fileObj.type || 'application/pdf',
-      status: 'verified',
+      status: 'uploaded', // Honest state: newly uploaded proof awaiting authority/OCR verification
       size: fileSizeFormatted,
-      fileUrl: uploadedFileUrl,
+      fileUrl: signedUrl,
       uploadedAt: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
       expiryDate: metadata.expiryDate || '2027-12-31',
       daysToExpiry: metadata.expiryDate ? Math.ceil((new Date(metadata.expiryDate) - new Date()) / (1000 * 60 * 60 * 24)) : 365,
-      issuingAuthority: metadata.issuingAuthority || 'Verified Government Entity'
+      issuingAuthority: metadata.issuingAuthority || 'Issuing Authority (Pending Verification)'
     };
 
+    // 3. Insert into Supabase documents table
     try {
       if (profileId && profileId !== 'demo-citizen-01') {
         const { data, error } = await supabase
           .from('documents')
           .insert({
+            id: newDocRecord.id,
             profile_id: profileId,
             name: newDocRecord.name,
             category: newDocRecord.category,
             document_number: newDocRecord.docNumber,
             file_type: fileObj.type || 'application/pdf',
             file_size: fileObj.size || 1500000,
-            file_url: uploadedFileUrl,
-            status: 'verified',
+            file_url: storageFilePath || signedUrl,
+            status: 'uploaded',
             expiry_date: newDocRecord.expiryDate,
             issuing_authority: newDocRecord.issuingAuthority
           })
           .select()
           .single();
 
-        if (!error && data) {
+        if (error) {
+          console.warn('[DocumentsAPI] Metadata insertion notice:', error.message);
+        } else if (data) {
           newDocRecord.id = data.id;
         }
       }
     } catch (err) {
-      console.warn('Backend document metadata insert failed, saving locally:', err);
+      console.warn('Backend document metadata insert failed:', err);
     }
 
-    // 3. Update local cache
+    // 4. Update local cache
     const existing = await this.fetchUserDocuments(profileId);
     const updated = [newDocRecord, ...existing.filter(d => d.id !== newDocRecord.id && d.name !== newDocRecord.name)];
 
@@ -210,11 +239,12 @@ export const DocumentsAPI = {
     return newDocRecord;
   },
 
-  calculateReadinessScore(userDocuments = [], eligibleSchemes = []) {
+  // Global Vault Completeness score
+  calculateReadinessScore(userDocuments = []) {
     if (!userDocuments || userDocuments.length === 0) return 30;
 
     const keyCategories = ['identity', 'income', 'land', 'financial', 'household'];
-    const availableCategories = new Set(userDocuments.filter(d => d.status === 'verified' || d.status === 'expiring_soon').map(d => d.category));
+    const availableCategories = new Set(userDocuments.map(d => d.category));
 
     let matched = 0;
     keyCategories.forEach(cat => {
@@ -223,6 +253,31 @@ export const DocumentsAPI = {
 
     const baseScore = Math.round((matched / keyCategories.length) * 100);
     return Math.min(100, Math.max(35, baseScore));
+  },
+
+  // Specific Scheme Readiness score (Exact requirement matching)
+  calculateSchemeDocumentReadiness(schemeRequiredDocs = [], userDocuments = []) {
+    if (!schemeRequiredDocs || schemeRequiredDocs.length === 0) return 100;
+    if (!userDocuments || userDocuments.length === 0) return 0;
+
+    const userDocNames = userDocuments.map(d => (d.name || '').toLowerCase());
+    let matchedCount = 0;
+
+    schemeRequiredDocs.forEach(reqDoc => {
+      const reqLower = reqDoc.toLowerCase();
+      const isPresent = userDocNames.some(uDoc => 
+        uDoc.includes(reqLower) || reqLower.includes(uDoc) ||
+        (reqLower.includes('aadhaar') && uDoc.includes('aadhaar')) ||
+        (reqLower.includes('income') && uDoc.includes('income')) ||
+        (reqLower.includes('land') && (uDoc.includes('land') || uDoc.includes('7/12') || uDoc.includes('ror'))) ||
+        (reqLower.includes('bank') && (uDoc.includes('bank') || uDoc.includes('passbook'))) ||
+        (reqLower.includes('ration') && uDoc.includes('ration')) ||
+        (reqLower.includes('caste') && (uDoc.includes('caste') || uDoc.includes('ncl') || uDoc.includes('certificate')))
+      );
+      if (isPresent) matchedCount++;
+    });
+
+    return Math.round((matchedCount / schemeRequiredDocs.length) * 100);
   }
 };
 

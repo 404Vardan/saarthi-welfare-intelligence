@@ -151,50 +151,96 @@ CREATE TABLE verification_queue (
 );
 
 -- ============================================================
--- 7. RLS POLICIES
+-- 7. SECURE RLS POLICIES (RBAC Enforced)
 -- ============================================================
 
--- scheme_registry: public read, operators write
+-- scheme_registry: public read for active/published, admin write
 ALTER TABLE scheme_registry ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "public_read_scheme_registry" ON scheme_registry
-  FOR SELECT USING (true);
-CREATE POLICY "operators_manage_scheme_registry" ON scheme_registry
-  FOR ALL USING (true);
+DROP POLICY IF EXISTS "public_read_scheme_registry" ON scheme_registry;
+DROP POLICY IF EXISTS "operators_manage_scheme_registry" ON scheme_registry;
 
--- scheme_rule_versions: public read, operators write
+CREATE POLICY "public_read_published_schemes" ON scheme_registry
+  FOR SELECT USING (
+    lifecycle_status IN ('PUBLISHED', 'VERIFIED', 'UPDATED')
+    OR (auth.uid() IS NOT NULL AND auth.uid() IN (SELECT user_id FROM user_roles WHERE role = 'admin'))
+  );
+
+CREATE POLICY "admins_insert_scheme_registry" ON scheme_registry
+  FOR INSERT WITH CHECK (
+    auth.uid() IN (SELECT user_id FROM user_roles WHERE role = 'admin')
+  );
+
+CREATE POLICY "admins_update_scheme_registry" ON scheme_registry
+  FOR UPDATE USING (
+    auth.uid() IN (SELECT user_id FROM user_roles WHERE role = 'admin')
+  );
+
+CREATE POLICY "admins_delete_scheme_registry" ON scheme_registry
+  FOR DELETE USING (
+    auth.uid() IN (SELECT user_id FROM user_roles WHERE role = 'admin')
+  );
+
+-- scheme_rule_versions: public read, admin write
 ALTER TABLE scheme_rule_versions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "public_read_rule_versions" ON scheme_rule_versions;
+DROP POLICY IF EXISTS "operators_manage_rule_versions" ON scheme_rule_versions;
+
 CREATE POLICY "public_read_rule_versions" ON scheme_rule_versions
   FOR SELECT USING (true);
-CREATE POLICY "operators_manage_rule_versions" ON scheme_rule_versions
-  FOR ALL USING (true);
 
--- scheme_sources: public read, operators write
+CREATE POLICY "admins_manage_rule_versions" ON scheme_rule_versions
+  FOR ALL USING (
+    auth.uid() IN (SELECT user_id FROM user_roles WHERE role = 'admin')
+  );
+
+-- scheme_sources: public read, admin write
 ALTER TABLE scheme_sources ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "public_read_sources" ON scheme_sources;
+DROP POLICY IF EXISTS "operators_manage_sources" ON scheme_sources;
+
 CREATE POLICY "public_read_sources" ON scheme_sources
   FOR SELECT USING (true);
-CREATE POLICY "operators_manage_sources" ON scheme_sources
-  FOR ALL USING (true);
 
--- scheme_change_history: public read, operators write
+CREATE POLICY "admins_manage_sources" ON scheme_sources
+  FOR ALL USING (
+    auth.uid() IN (SELECT user_id FROM user_roles WHERE role = 'admin')
+  );
+
+-- scheme_change_history: public read, admin write
 ALTER TABLE scheme_change_history ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "public_read_change_history" ON scheme_change_history;
+DROP POLICY IF EXISTS "operators_manage_change_history" ON scheme_change_history;
+
 CREATE POLICY "public_read_change_history" ON scheme_change_history
   FOR SELECT USING (true);
-CREATE POLICY "operators_manage_change_history" ON scheme_change_history
-  FOR ALL USING (true);
 
--- verification_queue: public read, operators write
+CREATE POLICY "admins_manage_change_history" ON scheme_change_history
+  FOR ALL USING (
+    auth.uid() IN (SELECT user_id FROM user_roles WHERE role = 'admin')
+  );
+
+-- verification_queue: strictly admin-only
 ALTER TABLE verification_queue ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "public_read_verification_queue" ON verification_queue
-  FOR SELECT USING (true);
-CREATE POLICY "operators_manage_verification_queue" ON verification_queue
-  FOR ALL USING (true);
+DROP POLICY IF EXISTS "public_read_verification_queue" ON verification_queue;
+DROP POLICY IF EXISTS "operators_manage_verification_queue" ON verification_queue;
 
--- operators: operators manage themselves
+CREATE POLICY "admins_manage_verification_queue" ON verification_queue
+  FOR ALL USING (
+    auth.uid() IN (SELECT user_id FROM user_roles WHERE role = 'admin')
+  );
+
+-- operators: authenticated read, admin write
 ALTER TABLE operators ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "public_read_operators" ON operators
-  FOR SELECT USING (true);
-CREATE POLICY "operators_manage_operators" ON operators
-  FOR ALL USING (true);
+DROP POLICY IF EXISTS "public_read_operators" ON operators;
+DROP POLICY IF EXISTS "operators_manage_operators" ON operators;
+
+CREATE POLICY "authenticated_read_operators" ON operators
+  FOR SELECT USING (auth.uid() IS NOT NULL);
+
+CREATE POLICY "admins_manage_operators" ON operators
+  FOR ALL USING (
+    auth.uid() IN (SELECT user_id FROM user_roles WHERE role = 'admin')
+  );
 
 -- ============================================================
 -- 8. v_active_schemes VIEW

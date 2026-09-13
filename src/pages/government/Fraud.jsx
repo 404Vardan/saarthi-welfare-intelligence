@@ -56,9 +56,14 @@ export default function GovFraud() {
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h1 className="gov-page-title" style={{ margin: 0 }}>Welfare Integrity & Risk Signals</h1>
-          <p className="gov-page-subtitle" style={{ margin: '4px 0 0 0' }}>
-            Algorithmic anomaly detection identifying duplicate claims, ghost beneficiaries, and income slab discrepancies.
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <h1 className="gov-page-title" style={{ margin: 0 }}>Welfare Integrity & Risk Signals</h1>
+            <span className="badge" style={{ background: 'rgba(212,160,23,0.2)', color: 'var(--brass-gold)', border: '1px solid rgba(212,160,23,0.4)', fontSize: '10px' }}>
+              SIMULATED PILOT DATASET
+            </span>
+          </div>
+          <p className="gov-page-subtitle" style={{ margin: 0 }}>
+            Simulated cross-departmental anomaly detection model demonstrating duplicate claims, ghost beneficiaries, and income slab discrepancies.
           </p>
         </div>
 
