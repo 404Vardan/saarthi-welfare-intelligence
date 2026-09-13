@@ -24,102 +24,171 @@ export function AuthProvider({ children }) {
   const [applications, setApplications] = useState([]);
   const [documents, setDocuments] = useState([]);
 
-  // ── Fetch user role from user_roles table ──
-  const loadUserRole = useCallback(async (userId) => {
+  // ── 1. Hardened Profile & Role Sync Engine ──
+  // Guarantees that profiles and user_roles records exist in both DB and local state
+  const ensureProfileAndRole = useCallback(async (authUser) => {
+    if (!authUser?.id) return { profile: null, role: 'citizen' };
+
+    const userId = authUser.id;
+    const fullName = authUser.user_metadata?.full_name || 
+                     authUser.user_metadata?.name || 
+                     authUser.email?.split('@')[0] || 
+                     'Citizen';
+
+    // 1. Resolve User Role
+    let resolvedRole = 'citizen';
     try {
-      const { data, error } = await supabase
+      const { data: roleData, error: roleErr } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId);
 
-      if (!error && data && data.length > 0) {
-        // User may have multiple roles; use highest privilege
-        const roles = data.map(r => r.role);
-        if (roles.includes('admin')) return 'admin';
-        if (roles.includes('government')) return 'government';
-        return 'citizen';
+      if (!roleErr && roleData && roleData.length > 0) {
+        const roles = roleData.map(r => r.role);
+        if (roles.includes('admin')) resolvedRole = 'admin';
+        else if (roles.includes('government')) resolvedRole = 'government';
+        else resolvedRole = 'citizen';
+      } else {
+        // No role record found -> explicitly seed 'citizen' role in DB
+        try {
+          await supabase.from('user_roles').upsert({ user_id: userId, role: 'citizen' }, { onConflict: 'user_id,role' });
+        } catch (seedRoleErr) {
+          console.warn('[Saarthi Auth] Role seed notice:', seedRoleErr.message);
+        }
+        resolvedRole = 'citizen';
       }
     } catch (err) {
-      console.error('[Saarthi] Failed to load user role:', err.message);
+      console.error('[Saarthi Auth] Error querying user_roles:', err.message);
+      resolvedRole = 'citizen';
     }
-    return 'citizen'; // default role
-  }, []);
 
-  // ── Load profile from Supabase DB ──
-  const loadProfileFromDatabase = useCallback(async (userId) => {
+    // 2. Resolve Profile (Guarantee record exists)
+    let resolvedProfile = null;
     try {
-      const { data: pData } = await supabase.from('profiles').select('*').eq('id', userId).single();
+      const { data: pData, error: pErr } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
       if (pData) {
-        setProfile(pData);
-        localStorage.setItem(LOCAL_PROFILE_KEY, JSON.stringify(pData));
+        resolvedProfile = pData;
+      } else {
+        // Profile row missing (e.g. fresh OAuth sign-in or trigger bypass) -> create baseline profile
+        const baselineProfile = {
+          id: userId,
+          full_name: fullName,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+        try {
+          const { data: insertedProf, error: insErr } = await supabase
+            .from('profiles')
+            .upsert(baselineProfile)
+            .select()
+            .single();
+
+          resolvedProfile = insertedProf || baselineProfile;
+        } catch (insErr) {
+          console.warn('[Saarthi Auth] Profile upsert notice:', insErr.message);
+          resolvedProfile = baselineProfile;
+        }
       }
-      const { data: hData } = await supabase.from('household_members').select('*').eq('profile_id', userId);
+    } catch (err) {
+      console.error('[Saarthi Auth] Error loading profile from DB:', err.message);
+      resolvedProfile = { id: userId, full_name: fullName };
+    }
+
+    // 3. Resolve Household Members
+    try {
+      const { data: hData } = await supabase
+        .from('household_members')
+        .select('*')
+        .eq('profile_id', userId);
+
       if (hData && hData.length > 0) {
         setHousehold(hData);
         localStorage.setItem(LOCAL_HOUSEHOLD_KEY, JSON.stringify(hData));
       }
     } catch (err) {
-      console.error('[Saarthi] Failed to load profile from database:', err.message);
+      console.warn('[Saarthi Auth] Household members fetch notice:', err.message);
     }
+
+    // Store in local storage cache
+    localStorage.setItem(LOCAL_PROFILE_KEY, JSON.stringify(resolvedProfile));
+
+    return { profile: resolvedProfile, role: resolvedRole };
   }, []);
 
-  // ── 1. Listen to Supabase Auth State ──
+  // ── 2. Unified Session Synchronizer with Concurrency Lock ──
   useEffect(() => {
-    // Check existing session on mount
-    const initSession = async () => {
+    let isMounted = true;
+    let syncing = false;
+
+    const syncSession = async (session) => {
+      if (syncing) return;
+      syncing = true;
+
       try {
-        const { data: { session } } = await supabase.auth.getSession();
         if (session?.user) {
           const u = {
             id: session.user.id,
             email: session.user.email,
-            full_name: session.user.user_metadata?.full_name || 'Citizen'
+            full_name: session.user.user_metadata?.full_name || 
+                       session.user.user_metadata?.name || 
+                       session.user.email?.split('@')[0] || 
+                       'Citizen'
           };
-          setUser(u);
-          const userRole = await loadUserRole(session.user.id);
-          setRole(userRole);
-          await loadProfileFromDatabase(session.user.id);
+          if (isMounted) setUser(u);
+
+          const { profile: resProfile, role: resRole } = await ensureProfileAndRole(session.user);
+          if (isMounted) {
+            setProfile(resProfile);
+            setRole(resRole);
+          }
+        } else {
+          if (isMounted) {
+            setUser(null);
+            setRole(null);
+            setProfile(null);
+            setHousehold([]);
+            setEvaluations([]);
+            setApplications([]);
+            setDocuments([]);
+          }
         }
       } catch (err) {
-        console.error('[Saarthi] Session init error:', err.message);
+        console.error('[Saarthi Auth] Auth synchronization error:', err.message);
       } finally {
-        setLoading(false);
+        syncing = false;
+        if (isMounted) setLoading(false);
       }
     };
 
-    initSession();
+    // Initial session bootstrap
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      syncSession(session);
+    }).catch(err => {
+      console.error('[Saarthi Auth] getSession error:', err.message);
+      if (isMounted) setLoading(false);
+    });
 
-    // Listen for auth changes (sign in, sign out, token refresh)
+    // Unified auth event listener
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        const u = {
-          id: session.user.id,
-          email: session.user.email,
-          full_name: session.user.user_metadata?.full_name || 'Citizen'
-        };
-        setUser(u);
-        const userRole = await loadUserRole(session.user.id);
-        setRole(userRole);
-        await loadProfileFromDatabase(session.user.id);
-        setLoading(false);
+      if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') {
+        await syncSession(session);
       } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setRole(null);
-        setProfile(null);
-        setHousehold([]);
-        setEvaluations([]);
-        setApplications([]);
-        setDocuments([]);
-        setLoading(false);
+        syncSession(null);
       }
     });
 
     return () => {
+      isMounted = false;
       authListener?.subscription?.unsubscribe();
     };
-  }, [loadUserRole, loadProfileFromDatabase]);
+  }, [ensureProfileAndRole]);
 
-  // ── 2. Load Schemes & evaluate eligibility when profile changes ──
+  // ── 3. Load Schemes & evaluate eligibility when profile changes ──
   useEffect(() => {
     if (!profile?.id) return;
 
@@ -141,9 +210,9 @@ export function AuthProvider({ children }) {
       }
     }
     loadData();
-  }, [profile?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [profile?.id, household]);
 
-  // ── Sign In with email / password ──
+  // ── 4. Sign In with Email / Password ──
   const signIn = async (email, password) => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -154,13 +223,13 @@ export function AuthProvider({ children }) {
         const u = {
           id: data.user.id,
           email: data.user.email,
-          full_name: data.user.user_metadata?.full_name || 'Citizen'
+          full_name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'Citizen'
         };
         setUser(u);
-        const userRole = await loadUserRole(data.user.id);
-        setRole(userRole);
-        await loadProfileFromDatabase(data.user.id);
-        return { success: true, role: userRole };
+        const { profile: resProfile, role: resRole } = await ensureProfileAndRole(data.user);
+        setProfile(resProfile);
+        setRole(resRole);
+        return { success: true, role: resRole };
       }
       return { success: false, error: 'Authentication failed. Please check your credentials.' };
     } catch (err) {
@@ -169,7 +238,31 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // ── Sign Up with Supabase ──
+  // ── 5. Sign In with Google OAuth ──
+  const signInWithGoogle = async (redirectTo = '/citizen/dashboard') => {
+    try {
+      const targetUrl = `${window.location.origin}${redirectTo}`;
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: targetUrl,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent'
+          }
+        }
+      });
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      return { success: true, data };
+    } catch (err) {
+      console.error('[Saarthi] Google OAuth error:', err.message);
+      return { success: false, error: err.message || 'Failed to initialize Google authentication.' };
+    }
+  };
+
+  // ── 6. Sign Up with Supabase ──
   const signUp = async (email, password, fullName) => {
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -183,20 +276,14 @@ export function AuthProvider({ children }) {
       if (data?.user) {
         const u = { id: data.user.id, email: data.user.email, full_name: fullName };
         setUser(u);
-        setRole('citizen'); // New signups are always citizens
+        const { profile: resProfile, role: resRole } = await ensureProfileAndRole({
+          ...data.user,
+          user_metadata: { full_name: fullName }
+        });
+        setProfile(resProfile);
+        setRole(resRole || 'citizen');
 
-        // Create profile in Supabase profiles
-        const newProf = { id: data.user.id, full_name: fullName };
-        setProfile(newProf);
-        localStorage.setItem(LOCAL_PROFILE_KEY, JSON.stringify(newProf));
-
-        try {
-          await supabase.from('profiles').upsert({ id: data.user.id, full_name: fullName });
-        } catch (profileErr) {
-          console.error('[Saarthi] Profile creation failed:', profileErr.message);
-        }
-
-        return { success: true };
+        return { success: true, role: resRole || 'citizen' };
       }
       return { success: false, error: 'Account creation failed. Please try again.' };
     } catch (err) {
@@ -385,6 +472,7 @@ export function AuthProvider({ children }) {
       isGovernment,
       isAdmin,
       signIn,
+      signInWithGoogle,
       signUp,
       signOut,
       forgotPassword,

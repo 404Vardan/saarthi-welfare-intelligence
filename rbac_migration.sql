@@ -32,23 +32,44 @@ CREATE POLICY "admins_manage_roles" ON user_roles
   );
 
 -- ============================================================
--- 2. AUTO-ASSIGN CITIZEN ROLE ON SIGNUP
+-- 2. AUTO-PROVISION PROFILE & CITIZEN ROLE ON SIGNUP (Email & OAuth)
 -- ============================================================
-CREATE OR REPLACE FUNCTION handle_new_user_role()
+CREATE OR REPLACE FUNCTION handle_new_user_bootstrap()
 RETURNS TRIGGER AS $$
+DECLARE
+  extracted_name TEXT;
 BEGIN
-  INSERT INTO user_roles (user_id, role)
+  -- Extract display name from user metadata or fallback to email prefix
+  extracted_name := COALESCE(
+    NEW.raw_user_meta_data->>'full_name',
+    NEW.raw_user_meta_data->>'name',
+    SPLIT_PART(NEW.email, '@', 1),
+    'Citizen'
+  );
+
+  -- 1. Ensure profile exists
+  INSERT INTO public.profiles (id, full_name, created_at, updated_at)
+  VALUES (NEW.id, extracted_name, NOW(), NOW())
+  ON CONFLICT (id) DO UPDATE
+  SET full_name = EXCLUDED.full_name,
+      updated_at = NOW()
+  WHERE public.profiles.full_name IS NULL OR public.profiles.full_name = '';
+
+  -- 2. Ensure citizen role is assigned
+  INSERT INTO public.user_roles (user_id, role)
   VALUES (NEW.id, 'citizen')
   ON CONFLICT (user_id, role) DO NOTHING;
+
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Drop existing trigger if it exists, then create
+-- Drop any previous conflicting triggers and attach bootstrap
 DROP TRIGGER IF EXISTS on_auth_user_role_created ON auth.users;
-CREATE TRIGGER on_auth_user_role_created
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION handle_new_user_role();
+  FOR EACH ROW EXECUTE FUNCTION handle_new_user_bootstrap();
 
 -- ============================================================
 -- 3. ADD RLS TO REGISTRY TABLES (missing from registry_migration)
