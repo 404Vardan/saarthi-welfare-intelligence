@@ -179,34 +179,52 @@ export default function GovDashboard() {
               <tr>
                 <th>District</th>
                 <th>State</th>
-                <th>Gap %</th>
-                <th>Primary Bottleneck</th>
+                <th>Eligible</th>
+                <th>Applied</th>
+                <th>Unserved Gap</th>
+                <th>Saturation</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td style={{ fontWeight: 600, color: 'white' }}>Varanasi</td>
+                <td style={{ fontWeight: 700, color: 'white' }}>Surat</td>
+                <td>Gujarat</td>
+                <td style={{ fontFamily: 'var(--font-mono)' }}>82,400</td>
+                <td style={{ fontFamily: 'var(--font-mono)' }}>51,200</td>
+                <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--seal-vermillion)', fontWeight: 600 }}>31,200</td>
+                <td style={{ color: 'var(--brass-gold)', fontWeight: 600 }}>62.1%</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: 700, color: 'white' }}>Anand</td>
+                <td>Gujarat</td>
+                <td style={{ fontFamily: 'var(--font-mono)' }}>41,300</td>
+                <td style={{ fontFamily: 'var(--font-mono)' }}>32,100</td>
+                <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--ledger-green)', fontWeight: 600 }}>9,200</td>
+                <td style={{ color: 'var(--ledger-green)', fontWeight: 600 }}>77.7%</td>
+              </tr>
+              <tr>
+                <td style={{ fontWeight: 700, color: 'white' }}>Varanasi</td>
                 <td>Uttar Pradesh</td>
-                <td style={{ color: 'var(--seal-vermillion)', fontWeight: 600 }}>37.3%</td>
-                <td>Missing Land Records</td>
+                <td style={{ fontFamily: 'var(--font-mono)' }}>72,100</td>
+                <td style={{ fontFamily: 'var(--font-mono)' }}>39,400</td>
+                <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--seal-vermillion)', fontWeight: 600 }}>32,700</td>
+                <td style={{ color: 'var(--seal-vermillion)', fontWeight: 600 }}>54.6%</td>
               </tr>
               <tr>
-                <td style={{ fontWeight: 600, color: 'white' }}>Jodhpur</td>
-                <td>Rajasthan</td>
-                <td style={{ color: 'var(--seal-vermillion)', fontWeight: 600 }}>31.8%</td>
-                <td>Awareness Asymmetry</td>
+                <td style={{ fontWeight: 700, color: 'white' }}>Patna</td>
+                <td>Bihar</td>
+                <td style={{ fontFamily: 'var(--font-mono)' }}>89,200</td>
+                <td style={{ fontFamily: 'var(--font-mono)' }}>44,100</td>
+                <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--seal-vermillion)', fontWeight: 600 }}>45,100</td>
+                <td style={{ color: 'var(--seal-vermillion)', fontWeight: 600 }}>49.4%</td>
               </tr>
               <tr>
-                <td style={{ fontWeight: 600, color: 'white' }}>Surat</td>
-                <td>Gujarat</td>
-                <td style={{ color: 'var(--amber)', fontWeight: 600 }}>25.1%</td>
-                <td>Documentation Deficits</td>
-              </tr>
-              <tr>
-                <td style={{ fontWeight: 600, color: 'white' }}>Anand</td>
-                <td>Gujarat</td>
-                <td style={{ color: 'var(--ledger-green)', fontWeight: 600 }}>14.2%</td>
-                <td>Portal Bounce Rate</td>
+                <td style={{ fontWeight: 700, color: 'white' }}>Pune</td>
+                <td>Maharashtra</td>
+                <td style={{ fontFamily: 'var(--font-mono)' }}>68,500</td>
+                <td style={{ fontFamily: 'var(--font-mono)' }}>49,800</td>
+                <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--brass-gold)', fontWeight: 600 }}>18,700</td>
+                <td style={{ color: 'var(--brass-gold)', fontWeight: 600 }}>72.7%</td>
               </tr>
             </tbody>
           </table>
