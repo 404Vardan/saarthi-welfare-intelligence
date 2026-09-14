@@ -46,11 +46,12 @@ export default function ProtectedRoute({ children, allowedRoles = ['citizen'] })
     );
   }
 
-  // Not authenticated — redirect to appropriate login
+  // Not authenticated — redirect to appropriate login based on current path
   if (!user) {
     let loginPath = '/citizen/login';
-    if (allowedRoles.includes('government')) loginPath = '/government/login';
-    if (allowedRoles.includes('admin')) loginPath = '/operations/login';
+    const path = location.pathname;
+    if (path.startsWith('/government')) loginPath = '/government/login';
+    else if (path.startsWith('/operations')) loginPath = '/operations/login';
 
     return <Navigate to={loginPath} state={{ from: location }} replace />;
   }

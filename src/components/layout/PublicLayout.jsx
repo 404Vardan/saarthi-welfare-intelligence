@@ -23,18 +23,14 @@ export default function PublicLayout() {
           </Link>
 
           <nav className="nav-links">
-            <Link to="/citizen/explorer" className="nav-link">Explore Schemes</Link>
             <a href="/#how-it-works" className="nav-link">How It Works</a>
             <a href="/#welfare-graph" className="nav-link">Welfare Graph</a>
             <a href="/#government" className="nav-link">For Government</a>
-            <Link to="/operations/dashboard" className="nav-link" style={{ color: 'var(--brass-gold)', fontWeight: 600 }}>
-              Scheme Operations ⚙️
-            </Link>
           </nav>
 
           <div className="nav-actions">
-            <Link to="/citizen/dashboard" className="btn-nav-primary">I'm a Citizen →</Link>
-            <Link to="/government/dashboard" className="btn-nav-outline">Government Console</Link>
+            <Link to="/citizen/login" className="btn-nav-primary">Citizen Portal →</Link>
+            <Link to="/government/login" className="btn-nav-outline">Government Console</Link>
           </div>
         </div>
       </header>

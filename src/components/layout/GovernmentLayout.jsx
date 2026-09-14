@@ -9,8 +9,6 @@ import {
   BarChart3,
   ShieldAlert,
   Scale,
-  Database,
-  CheckCircle2,
   FileSpreadsheet,
   Search,
   Settings,
@@ -18,9 +16,11 @@ import {
 } from 'lucide-react';
 
 export default function GovernmentLayout() {
+  const { signOut } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await signOut();
     navigate('/government/login');
   };
 
@@ -72,16 +72,8 @@ export default function GovernmentLayout() {
             <span>Policy Lab</span>
           </NavLink>
 
-          {/* 4. OPERATIONS */}
-          <div className="gov-section-title">OPERATIONS</div>
-          <NavLink to="/operations/registry" className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`}>
-            <Database size={16} />
-            <span>Scheme Registry</span>
-          </NavLink>
-          <NavLink to="/operations/verification" className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`}>
-            <CheckCircle2 size={16} />
-            <span>Verification Queue</span>
-          </NavLink>
+          {/* 4. REPORTS */}
+          <div className="gov-section-title">REPORTS</div>
           <NavLink to="/government/reports" className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`}>
             <FileSpreadsheet size={16} />
             <span>Reports & Exports</span>

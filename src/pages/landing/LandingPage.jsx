@@ -125,10 +125,10 @@ export default function LandingPage() {
             </p>
 
             <div className="hero-cta-strip">
-              <Link to="/citizen/dashboard" className="btn-hero-primary">
+              <Link to="/citizen/login" className="btn-hero-primary">
                 Find My Schemes →
               </Link>
-              <Link to="/citizen/explorer" className="btn-hero-secondary">
+              <Link to="/citizen/login" className="btn-hero-secondary">
                 Explore Schemes
               </Link>
             </div>
@@ -569,7 +569,7 @@ export default function LandingPage() {
               </div>
 
               <div style={{ marginTop: '28px' }}>
-                <Link to="/government/dashboard" className="btn-hero-primary" style={{ display: 'inline-block' }}>
+                <Link to="/government/login" className="btn-hero-primary" style={{ display: 'inline-block' }}>
                   Explore Government Intelligence Console →
                 </Link>
               </div>
@@ -701,7 +701,7 @@ export default function LandingPage() {
             You shouldn't need to know the name of a scheme to discover that it exists for you.
           </h2>
           <div>
-            <Link to="/citizen/dashboard" className="btn-hero-primary" style={{ fontSize: '18px', padding: '18px 44px' }}>
+            <Link to="/citizen/login" className="btn-hero-primary" style={{ fontSize: '18px', padding: '18px 44px' }}>
               Find My Schemes →
             </Link>
           </div>
