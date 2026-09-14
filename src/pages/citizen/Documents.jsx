@@ -391,7 +391,24 @@ export default function CitizenDocuments() {
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+              <div>
+                {previewDoc.fileUrl && previewDoc.fileUrl !== '#' ? (
+                  <a
+                    href={previewDoc.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-primary btn-sm"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    Open Encrypted Document ↗
+                  </a>
+                ) : (
+                  <span style={{ fontSize: '0.75rem', color: 'var(--slate)', fontFamily: 'var(--font-mono)' }}>
+                    🔒 Signed preview unavailable
+                  </span>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={() => setPreviewDoc(null)}

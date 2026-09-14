@@ -17,8 +17,9 @@ import {
 
 export default function OpsSystemHealth() {
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [liveDbLatency, setLiveDbLatency] = useState('24ms');
-  const [liveEngineLatency, setLiveEngineLatency] = useState('<2ms');
+  const [liveDbLatency, setLiveDbLatency] = useState('Measuring...');
+  const [liveDbStatus, setLiveDbStatus] = useState('PROBING');
+  const [liveEngineLatency, setLiveEngineLatency] = useState('Measuring...');
   const [lastCheckedTime, setLastCheckedTime] = useState('Just now');
 
   const checkTelemetry = async () => {
@@ -27,11 +28,18 @@ export default function OpsSystemHealth() {
     // 1. Measure real Supabase DB Ping Latency
     const t0 = performance.now();
     try {
-      await supabase.from('schemes').select('id').limit(1);
+      const { error } = await supabase.from('schemes').select('id').limit(1);
       const dbElapsed = Math.round(performance.now() - t0);
-      setLiveDbLatency(`${dbElapsed}ms`);
+      if (!error) {
+        setLiveDbLatency(`${dbElapsed}ms`);
+        setLiveDbStatus('OPERATIONAL');
+      } else {
+        setLiveDbLatency('Offline / Error');
+        setLiveDbStatus('DEGRADED');
+      }
     } catch {
-      setLiveDbLatency('32ms (cached)');
+      setLiveDbLatency('Network Unreachable');
+      setLiveDbStatus('OFFLINE');
     }
 
     // 2. Measure real AST Rule Engine compute latency
@@ -43,7 +51,7 @@ export default function OpsSystemHealth() {
       const engineElapsed = (performance.now() - t1).toFixed(1);
       setLiveEngineLatency(`${engineElapsed}ms`);
     } catch {
-      setLiveEngineLatency('<1ms');
+      setLiveEngineLatency('Evaluation Error');
     }
 
     setLastCheckedTime(new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
@@ -58,44 +66,51 @@ export default function OpsSystemHealth() {
     {
       name: 'Supabase PostgreSQL & RLS Policies',
       type: 'Database',
-      status: 'OPERATIONAL',
+      monitoring: 'LIVE PROBE',
+      status: liveDbStatus,
       latency: liveDbLatency,
-      uptime: '99.99%',
-      details: 'Row-Level Security enforced across profiles, household_members, and applications tables.'
+      monitoringDetail: 'Active query round-trip probe via Supabase JS client.',
+      details: 'Authoritative Row-Level Security policies enforced across profiles, user_roles, documents, and applications.'
     },
     {
       name: 'Deterministic AST Rule Engine',
       type: 'Compute Engine',
+      monitoring: 'LIVE BENCHMARK',
       status: 'OPTIMAL',
       latency: liveEngineLatency,
-      uptime: '100.0%',
-      details: 'Client-side AST evaluator executing 3-valued logic over 100+ statutory schemes.'
+      monitoringDetail: 'In-memory 3-valued AST rule evaluation across 50 statutory schemes.',
+      details: 'Deterministic AST rule evaluator executing client-side eligibility logic without external cloud dependencies.'
     },
     {
       name: 'Supabase Storage Bucket (documents/)',
       type: 'Object Storage (Private)',
-      status: 'OPERATIONAL',
-      latency: '48ms',
-      uptime: '99.98%',
-      details: 'Encrypted document locker proofs storage with 1-hour time-limited signed URLs.'
+      monitoring: 'NOT MONITORED CLIENT-SIDE',
+      status: 'MANAGED INFRASTRUCTURE',
+      latency: 'External SLA',
+      monitoringDetail: 'Supabase S3-compatible managed private object storage.',
+      details: 'Encrypted document vault with 1-hour time-limited signed URLs and folder-level RLS.'
     },
     {
-      name: 'Supabase Edge Function (ask-saarthi)',
+      name: 'Supabase Edge Functions',
       type: 'Serverless Edge API',
-      status: 'OPERATIONAL',
-      latency: '215ms',
-      uptime: '100.0%',
-      details: 'Gemini 1.5 Flash backend proxy with caller JWT verification and zero key leakage.'
+      monitoring: 'ON-DEMAND INVOCATION',
+      status: 'MANAGED INFRASTRUCTURE',
+      latency: 'Per-Request SLA',
+      monitoringDetail: 'Deno edge runtime invoked on-demand with caller JWT verification.',
+      details: 'Isolated serverless edge functions for server-side eligibility evaluation and AI proxying.'
     },
     {
-      name: 'Supabase Realtime WebSocket Gateway',
+      name: 'Supabase Realtime Gateway',
       type: 'Event Stream',
-      status: 'OPERATIONAL',
-      latency: '18ms',
-      uptime: '99.99%',
+      monitoring: 'NOT MONITORED CLIENT-SIDE',
+      status: 'MANAGED INFRASTRUCTURE',
+      latency: 'WebSocket Stream',
+      monitoringDetail: 'Postgres CDC WebSocket replication channel.',
       details: 'Broadcasting live application events to Government Command Center.'
     }
   ];
+
+  const allOperational = liveDbStatus === 'OPERATIONAL';
 
   return (
     <div>
@@ -104,12 +119,12 @@ export default function OpsSystemHealth() {
           <div>
             <h1 className="ops-page-title">Platform System Health & Monitoring</h1>
             <p className="ops-page-subtitle">
-              Live infrastructure telemetry, API response latencies, and service uptime across Saarthi production stack.
+              Live operational telemetry and component status. Probed at {lastCheckedTime}.
             </p>
           </div>
           <button
             type="button"
-            onClick={handleRefresh}
+            onClick={checkTelemetry}
             className="btn btn-secondary btn-sm"
             style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           >
@@ -118,12 +133,12 @@ export default function OpsSystemHealth() {
         </div>
       </header>
 
-      {/* Global Status Banner */}
+      {/* Live Status Banner */}
       <div
         className="card"
         style={{
           background: '#FFFDF9',
-          borderLeft: '4px solid var(--ledger-green)',
+          borderLeft: `4px solid ${allOperational ? 'var(--ledger-green)' : 'var(--seal-vermillion)'}`,
           padding: '1.5rem',
           marginBottom: '1.5rem',
           display: 'flex',
@@ -134,27 +149,32 @@ export default function OpsSystemHealth() {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ background: 'rgba(31,122,77,0.1)', color: 'var(--ledger-green)', padding: '10px', borderRadius: '50%' }}>
+          <div style={{
+            background: allOperational ? 'rgba(31,122,77,0.1)' : 'rgba(193,68,45,0.1)',
+            color: allOperational ? 'var(--ledger-green)' : 'var(--seal-vermillion)',
+            padding: '10px',
+            borderRadius: '50%'
+          }}>
             <CheckCircle2 size={24} />
           </div>
           <div>
             <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--ink-navy)', margin: '0 0 2px 0', fontSize: '1.2rem' }}>
-              All Systems Fully Operational
+              {allOperational ? 'Core Systems Responding' : 'Degraded Connectivity Detected'}
             </h3>
             <p style={{ color: 'var(--slate)', fontSize: '0.85rem', margin: 0 }}>
-              Zero critical outages detected in the last 30 days. Average global response time: <strong>46ms</strong>.
+              Live telemetry is measured directly from your browser session to the cloud database and local compute engines.
             </p>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '16px', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
+        <div style={{ display: 'flex', gap: '20px', fontFamily: 'var(--font-mono)', fontSize: '0.85rem' }}>
           <div>
-            <div style={{ color: 'var(--slate)', fontSize: '10px', textTransform: 'uppercase' }}>Overall Uptime</div>
-            <div style={{ fontWeight: 700, color: 'var(--ledger-green)' }}>99.98%</div>
+            <div style={{ color: 'var(--slate)', fontSize: '10px', textTransform: 'uppercase' }}>Database Latency</div>
+            <div style={{ fontWeight: 700, color: 'var(--ink-navy)' }}>{liveDbLatency}</div>
           </div>
           <div>
-            <div style={{ color: 'var(--slate)', fontSize: '10px', textTransform: 'uppercase' }}>Error Rate</div>
-            <div style={{ fontWeight: 700, color: 'var(--ledger-green)' }}>0.01%</div>
+            <div style={{ color: 'var(--slate)', fontSize: '10px', textTransform: 'uppercase' }}>AST Engine Latency</div>
+            <div style={{ fontWeight: 700, color: 'var(--ledger-green)' }}>{liveEngineLatency}</div>
           </div>
         </div>
       </div>
@@ -173,7 +193,7 @@ export default function OpsSystemHealth() {
                 </h4>
               </div>
 
-              <span className="badge badge-eligible" style={{ fontSize: '10px' }}>
+              <span className={`badge ${svc.status === 'OPERATIONAL' || svc.status === 'OPTIMAL' ? 'badge-eligible' : 'badge-neutral'}`} style={{ fontSize: '10px' }}>
                 {svc.status}
               </span>
             </div>
@@ -184,7 +204,7 @@ export default function OpsSystemHealth() {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid var(--border)', fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>
               <span>Latency: <strong style={{ color: 'var(--ink-navy)' }}>{svc.latency}</strong></span>
-              <span>Uptime: <strong style={{ color: 'var(--ledger-green)' }}>{svc.uptime}</strong></span>
+              <span style={{ color: 'var(--slate)', fontSize: '11px' }}>{svc.monitoring}</span>
             </div>
           </div>
         ))}

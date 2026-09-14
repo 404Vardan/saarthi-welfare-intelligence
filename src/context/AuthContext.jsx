@@ -27,7 +27,7 @@ export function AuthProvider({ children }) {
   // ── 1. Hardened Profile & Role Sync Engine ──
   // Guarantees that profiles and user_roles records exist in both DB and local state
   const ensureProfileAndRole = useCallback(async (authUser) => {
-    if (!authUser?.id) return { profile: null, role: 'citizen' };
+    if (!authUser?.id) return { profile: null, role: null, authError: 'UNAUTHENTICATED' };
 
     const userId = authUser.id;
     const fullName = authUser.user_metadata?.full_name || 
@@ -35,31 +35,42 @@ export function AuthProvider({ children }) {
                      authUser.email?.split('@')[0] || 
                      'Citizen';
 
-    // 1. Resolve User Role
-    let resolvedRole = 'citizen';
+    // 1. Authoritative Role Resolution (Strictly Fail-Closed)
+    // Client NEVER provisions or self-assigns roles. Roles are assigned exclusively
+    // via database triggers on signup or by authorized administrators.
+    let resolvedRole = null;
+    let authError = null;
+
     try {
       const { data: roleData, error: roleErr } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId);
 
-      if (!roleErr && roleData && roleData.length > 0) {
+      if (roleErr) {
+        console.error('[Saarthi Auth] Database error querying user_roles:', roleErr.message);
+        authError = 'ROLE_QUERY_ERROR';
+        resolvedRole = null;
+      } else if (roleData && roleData.length > 0) {
         const roles = roleData.map(r => r.role);
         if (roles.includes('admin')) resolvedRole = 'admin';
         else if (roles.includes('government')) resolvedRole = 'government';
-        else resolvedRole = 'citizen';
-      } else {
-        // No role record found -> explicitly seed 'citizen' role in DB
-        try {
-          await supabase.from('user_roles').upsert({ user_id: userId, role: 'citizen' }, { onConflict: 'user_id,role' });
-        } catch (seedRoleErr) {
-          console.warn('[Saarthi Auth] Role seed notice:', seedRoleErr.message);
+        else if (roles.includes('citizen')) resolvedRole = 'citizen';
+        else {
+          console.warn('[Saarthi Auth] Unrecognized role in DB:', roles);
+          resolvedRole = null;
+          authError = 'UNRECOGNIZED_ROLE';
         }
-        resolvedRole = 'citizen';
+      } else {
+        // No role assigned in database -> Fail closed. Never fabricate or assume 'citizen'.
+        console.warn('[Saarthi Auth] No role record exists in database for user:', userId);
+        resolvedRole = null;
+        authError = 'NO_ROLE_ASSIGNED';
       }
     } catch (err) {
-      console.error('[Saarthi Auth] Error querying user_roles:', err.message);
-      resolvedRole = 'citizen';
+      console.error('[Saarthi Auth] Critical exception reading user_roles:', err.message);
+      resolvedRole = null;
+      authError = 'ROLE_RESOLUTION_EXCEPTION';
     }
 
     // 2. Resolve Profile (Guarantee record exists)

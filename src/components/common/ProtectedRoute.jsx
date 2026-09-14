@@ -56,14 +56,76 @@ export default function ProtectedRoute({ children, allowedRoles = ['citizen'] })
     return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 
-  // Authenticated but wrong role — redirect to their own dashboard
-  if (role && !allowedRoles.includes(role)) {
+  // Authenticated but role is null or unresolved — fail closed
+  if (!role) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--paper)',
+        padding: '24px'
+      }}>
+        <div style={{
+          maxWidth: '480px',
+          background: 'white',
+          border: '1px solid var(--border)',
+          borderRadius: '8px',
+          padding: '32px',
+          textAlign: 'center',
+          boxShadow: '0 8px 24px rgba(0,0,0,0.06)'
+        }}>
+          <div style={{ fontSize: '36px', marginBottom: '16px' }}>🔒</div>
+          <h2 style={{ fontFamily: 'var(--font-display)', color: 'var(--ink-navy)', margin: '0 0 12px 0' }}>
+            Authorization Unresolved
+          </h2>
+          <p style={{ color: 'var(--slate)', fontSize: '0.95rem', lineHeight: 1.5, marginBottom: '24px' }}>
+            Your account authenticated successfully, but an authoritative role could not be verified from the database. Access has been denied to preserve system integrity.
+          </p>
+          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                padding: '10px 20px',
+                background: 'var(--ink-navy)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 600
+              }}
+            >
+              Retry
+            </button>
+            <a
+              href="/"
+              style={{
+                padding: '10px 20px',
+                border: '1px solid var(--border)',
+                borderRadius: '4px',
+                color: 'var(--ink-navy)',
+                textDecoration: 'none',
+                fontWeight: 600,
+                display: 'inline-block'
+              }}
+            >
+              Return Home
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Authenticated but unauthorized role for this route — redirect to authorized area
+  if (!allowedRoles.includes(role)) {
     const dashboardMap = {
       citizen: '/citizen/dashboard',
       government: '/government/dashboard',
       admin: '/operations/dashboard'
     };
-    return <Navigate to={dashboardMap[role] || '/citizen/dashboard'} replace />;
+    return <Navigate to={dashboardMap[role] || '/citizen/login'} replace />;
   }
 
   return children;
