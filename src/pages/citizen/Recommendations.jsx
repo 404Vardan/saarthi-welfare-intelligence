@@ -1,12 +1,63 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { CheckCircle, XCircle, AlertTriangle, ChevronDown, ChevronUp, Send, Check } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, ChevronDown, ChevronUp, Send, Check, ExternalLink, FileText } from 'lucide-react';
 import FeedbackWidget from '../../components/common/FeedbackWidget';
+
+const OFFICIAL_PORTAL_REGISTRY = {
+  'pm-kisan': {
+    name: 'PM-KISAN National Portal',
+    url: 'https://pmkisan.gov.in',
+    authority: 'Ministry of Agriculture & Farmers Welfare',
+    docsRequired: ['Aadhaar Card', 'Land Record (7/12 RoR)', 'Bank Passbook']
+  },
+  'pmjay': {
+    name: 'Ayushman Bharat PM-JAY Beneficiary Portal',
+    url: 'https://beneficiary.nha.gov.in',
+    authority: 'National Health Authority',
+    docsRequired: ['Aadhaar Card', 'Ration Card']
+  },
+  'post-matric-sc': {
+    name: 'National Scholarship Portal (NSP)',
+    url: 'https://scholarships.gov.in',
+    authority: 'Ministry of Social Justice & Empowerment',
+    docsRequired: ['Aadhaar Card', 'Caste Certificate', 'College Enrollment & Fee Receipt']
+  },
+  'pm-vishwakarma': {
+    name: 'PM Vishwakarma Portal',
+    url: 'https://pmvishwakarma.gov.in',
+    authority: 'Ministry of MSME',
+    docsRequired: ['Aadhaar Card', 'Artisan Trade Verification', 'Bank Passbook']
+  },
+  'pm-svanidhi': {
+    name: 'PM SVANidhi Portal',
+    url: 'https://pmsvanidhi.mohua.gov.in',
+    authority: 'Ministry of Housing & Urban Affairs',
+    docsRequired: ['Aadhaar Card', 'Vending Certificate / ULB Letter', 'Bank Passbook']
+  },
+  'pmmvy': {
+    name: 'PMMVY Direct Portal',
+    url: 'https://pmmvy.wcd.gov.in',
+    authority: 'Ministry of Women & Child Development',
+    docsRequired: ['Aadhaar Card', 'Mother Child Protection (MCP) Card', 'Bank Passbook']
+  },
+  'pm-ujjwala': {
+    name: 'PM Ujjwala Yojana 2.0',
+    url: 'https://www.pmuy.gov.in',
+    authority: 'Ministry of Petroleum & Natural Gas',
+    docsRequired: ['Aadhaar Card', 'BPL Ration Card', 'Bank Passbook']
+  },
+  'ignoaps': {
+    name: 'NSAP National Social Assistance Portal',
+    url: 'https://nsap.nic.in',
+    authority: 'Ministry of Rural Development',
+    docsRequired: ['Aadhaar Card', 'BPL Ration Card', 'Bank Passbook']
+  }
+};
 
 export default function CitizenRecommendations() {
   const navigate = useNavigate();
-  const { evaluations, profile, applyForScheme, applications } = useAuth();
+  const { evaluations, profile, applyForScheme, applications, documents = [] } = useAuth();
   const [activeTab, setActiveTab] = useState('eligible'); // 'eligible' | 'nearly' | 'missing_data' | 'all'
   const [expandedSchemeId, setExpandedSchemeId] = useState(null);
   const [applyingScheme, setApplyingScheme] = useState(null);
@@ -115,6 +166,7 @@ export default function CitizenRecommendations() {
               {eligible.map(item => {
                 const isExpanded = expandedSchemeId === item.schemeId;
                 const hasApplied = appliedSchemeIds.has(item.schemeId);
+                const portalInfo = OFFICIAL_PORTAL_REGISTRY[item.schemeId] || null;
 
                 return (
                   <div key={item.schemeId} className="card eligibility-card">
@@ -145,10 +197,22 @@ export default function CitizenRecommendations() {
                         {isExpanded ? 'Hide Rule Trace' : 'Inspect Rule Breakdown (Decision Trace)'}
                       </button>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                         <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--ledger-green)', fontWeight: 700 }}>
                           100% Match
                         </div>
+                        {portalInfo && (
+                          <a
+                            href={portalInfo.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-secondary btn-sm"
+                            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', textDecoration: 'none', fontSize: '0.78rem' }}
+                            title={`Open official portal: ${portalInfo.name}`}
+                          >
+                            <ExternalLink size={13} /> Official Portal ↗
+                          </a>
+                        )}
                         {hasApplied ? (
                           <span className="badge badge-eligible" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <Check size={12} /> Applied
@@ -181,6 +245,38 @@ export default function CitizenRecommendations() {
                             </span>
                           </div>
                         ))}
+
+                        {portalInfo?.docsRequired && (
+                          <div style={{ marginTop: '12px', padding: '10px 12px', background: 'var(--paper)', border: '1px solid var(--border)', borderRadius: '4px' }}>
+                            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--ink-navy)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                              <FileText size={13} color="var(--brass-gold)" /> Pre-Application Document Checklist:
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                              {portalInfo.docsRequired.map((docReq, dIdx) => {
+                                const hasInLocker = documents.some(d => d.name?.toLowerCase().includes(docReq.toLowerCase().split(' ')[0]) || docReq.toLowerCase().includes(d.category || ''));
+                                return (
+                                  <span
+                                    key={dIdx}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      fontSize: '0.72rem',
+                                      padding: '2px 8px',
+                                      borderRadius: '12px',
+                                      background: hasInLocker ? 'rgba(31,122,77,0.1)' : 'rgba(212,160,23,0.1)',
+                                      color: hasInLocker ? 'var(--ledger-green)' : 'var(--slate)',
+                                      border: `1px solid ${hasInLocker ? 'rgba(31,122,77,0.3)' : 'var(--border)'}`,
+                                      fontWeight: 500
+                                    }}
+                                  >
+                                    {hasInLocker ? '✓ Ready in Locker' : '○ Prepare'}: {docReq}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
 

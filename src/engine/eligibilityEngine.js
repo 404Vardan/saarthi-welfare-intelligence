@@ -23,6 +23,88 @@ export const ASTOperators = {
   BETWEEN: (a, b) => Array.isArray(b) && Number(a) >= Number(b[0]) && Number(a) <= Number(b[1])
 };
 
+/**
+ * Synchronous standard SHA-256 implementation for deterministic decision digest generation.
+ * Operates identically in browser, Node.js, and edge runtimes without asynchronous promises.
+ */
+export function sha256(ascii) {
+  function rightRotate(value, amount) {
+    return (value >>> amount) | (value << (32 - amount));
+  }
+
+  const mathPow = Math.pow;
+  const maxWord = mathPow(2, 32);
+  const lengthProperty = 'length';
+  let i, j;
+  let result = '';
+
+  const words = [];
+  const asciiBitLength = ascii[lengthProperty] * 8;
+
+  let hash = [];
+  let k = [];
+  let primeCounter = 0;
+
+  const isComposite = {};
+  for (let candidate = 2; primeCounter < 64; candidate++) {
+    if (!isComposite[candidate]) {
+      for (i = candidate * candidate; i < 312; i += candidate) {
+        isComposite[i] = true;
+      }
+      if (primeCounter < 8) {
+        hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
+      }
+      k[primeCounter] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+      primeCounter++;
+    }
+  }
+
+  words[asciiBitLength >> 5] |= 0x80 << (24 - (asciiBitLength % 32));
+  words[(((asciiBitLength + 64) >> 9) << 4) + 15] = asciiBitLength;
+
+  for (i = 0; i < ascii[lengthProperty]; i++) {
+    words[i >> 2] |= ascii.charCodeAt(i) << (24 - (i % 4) * 8);
+  }
+
+  for (let block = 0; block < words[lengthProperty]; block += 16) {
+    const w = words.slice(block, block + 16);
+    for (i = 0; i < 16; i++) {
+      if (!w[i]) w[i] = 0;
+    }
+    const oldHash = hash.slice(0);
+
+    for (i = 0; i < 64; i++) {
+      const w15 = w[i - 15], w2 = w[i - 2];
+      const s0 = rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3);
+      const s1 = rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10);
+      if (i >= 16) {
+        w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0;
+      }
+
+      const s1_h = rightRotate(hash[4], 6) ^ rightRotate(hash[4], 11) ^ rightRotate(hash[4], 25);
+      const ch = (hash[4] & hash[5]) ^ (~hash[4] & hash[6]);
+      const temp1 = (hash[7] + s1_h + ch + k[i] + w[i]) | 0;
+      const s0_h = rightRotate(hash[0], 2) ^ rightRotate(hash[0], 13) ^ rightRotate(hash[0], 22);
+      const maj = (hash[0] & hash[1]) ^ (hash[0] & hash[2]) ^ (hash[1] & hash[2]);
+      const temp2 = (s0_h + maj) | 0;
+
+      hash = [(temp1 + temp2) | 0, hash[0], hash[1], hash[2], (hash[3] + temp1) | 0, hash[4], hash[5], hash[6]];
+    }
+
+    for (i = 0; i < 8; i++) {
+      hash[i] = (hash[i] + oldHash[i]) | 0;
+    }
+  }
+
+  for (i = 0; i < 8; i++) {
+    for (j = 3; j >= 0; j--) {
+      const b = (hash[i] >> (8 * j)) & 255;
+      result += (b < 16 ? '0' : '') + b.toString(16);
+    }
+  }
+  return result;
+}
+
 export const EligibilityEngine = {
   /**
    * Resolves a dotted field path from context
@@ -40,14 +122,31 @@ export const EligibilityEngine = {
   },
 
   /**
-   * Computes household aggregate income
+   * Computes household aggregate income with strict 3-valued semantics.
+   * Identical to server edge function:
+   * Returns undefined when household income is completely absent/unreported.
+   * Distinguishes explicit 0 income (known zero) from unknown/missing income.
    */
   computeHouseholdIncome(citizen, householdMembers = []) {
-    let total = Number(citizen?.income_annual || 0);
+    const citizenIncome = (citizen?.income_annual !== undefined && citizen?.income_annual !== null && citizen?.income_annual !== '')
+      ? Number(citizen.income_annual)
+      : undefined;
+
+    let memberTotal = 0;
+    let hasMemberIncome = false;
+
     (householdMembers || []).forEach(m => {
-      total += Number(m.income_annual || 0);
+      if (m.income_annual !== undefined && m.income_annual !== null && m.income_annual !== '') {
+        memberTotal += Number(m.income_annual);
+        hasMemberIncome = true;
+      }
     });
-    return total;
+
+    if (citizenIncome === undefined && !hasMemberIncome) {
+      return undefined;
+    }
+
+    return (citizenIncome || 0) + memberTotal;
   },
 
   /**
@@ -478,30 +577,41 @@ export const EligibilityEngine = {
   },
 
   /**
-   * Computes household aggregate income without double counting
+   * Generates a strictly deterministic Decision Reference ID based on canonical eligibility inputs.
+   * Format: DEC-<SCHEME_TAG>-<12_CHAR_SHA256_HEX>
+   * Same normalized inputs + same scheme + same rule version => Identical decision reference ID.
+   * Any change in eligibility parameters => Divergent decision reference ID.
    */
-  computeHouseholdIncome(citizen, householdMembers = []) {
-    const citizenIncome = (citizen?.income_annual !== undefined && citizen?.income_annual !== null && citizen?.income_annual !== '')
-      ? Number(citizen.income_annual)
-      : undefined;
+  generateDeterministicDecisionId(scheme, citizen = {}, householdMembers = [], ruleVersion = '1.0.0') {
+    const schemeTag = (scheme.short_name || scheme.scheme_code || scheme.id || 'SCH')
+      .replace(/[^a-zA-Z0-9]/g, '')
+      .toUpperCase();
 
-    let memberTotal = 0;
-    let hasMemberIncome = false;
+    const normalizedInput = {
+      schemeId: scheme.id || scheme.scheme_code,
+      ruleVersion: ruleVersion || scheme.rule_version || '1.0.0',
+      age: (citizen?.age !== undefined && citizen?.age !== null && citizen?.age !== '') ? Number(citizen.age) : null,
+      gender: citizen?.gender ? String(citizen.gender).toLowerCase().trim() : null,
+      income_annual: (citizen?.income_annual !== undefined && citizen?.income_annual !== null && citizen?.income_annual !== '') ? Number(citizen.income_annual) : null,
+      category: citizen?.category ? String(citizen.category).toLowerCase().trim() : null,
+      occupation: citizen?.occupation ? String(citizen.occupation).toLowerCase().trim() : null,
+      state: citizen?.state ? String(citizen.state).toLowerCase().trim() : null,
+      district: citizen?.district ? String(citizen.district).toLowerCase().trim() : null,
+      area_type: citizen?.area_type ? String(citizen.area_type).toLowerCase().trim() : null,
+      land_ownership: citizen?.land_ownership ? String(citizen.land_ownership).toLowerCase().trim() : null,
+      house_ownership: citizen?.house_ownership ? String(citizen.house_ownership).toLowerCase().trim() : null,
+      bpl_card: Boolean(citizen?.bpl_card),
+      ration_card_type: citizen?.ration_card_type ? String(citizen.ration_card_type).toLowerCase().trim() : null,
+      bank_account: citizen?.bank_account !== undefined ? Boolean(citizen.bank_account) : null,
+      disability: citizen?.disability ? String(citizen.disability).toLowerCase().trim() : null,
+      education: citizen?.education ? String(citizen.education).toLowerCase().trim() : null,
+      householdIncome: this.computeHouseholdIncome(citizen, householdMembers),
+      householdCount: (householdMembers || []).length
+    };
 
-    (householdMembers || []).forEach(m => {
-      if (m.income_annual !== undefined && m.income_annual !== null && m.income_annual !== '') {
-        memberTotal += Number(m.income_annual);
-        hasMemberIncome = true;
-      }
-    });
-
-    if (citizenIncome === undefined && !hasMemberIncome) {
-      return undefined;
-    }
-
-    // If household members have declared incomes, sum citizen's personal income with members
-    // Otherwise fallback to citizen's self-reported household income
-    return (citizenIncome || 0) + memberTotal;
+    const canonicalString = JSON.stringify(normalizedInput, Object.keys(normalizedInput).sort());
+    const digest = sha256(canonicalString).slice(0, 12).toUpperCase();
+    return `DEC-${schemeTag}-${digest}`;
   },
 
   /**
@@ -569,8 +679,8 @@ export const EligibilityEngine = {
       ? Math.round((passedWeight / totalWeight) * 100)
       : 100;
 
-    const schemeTag = (scheme.short_name || scheme.scheme_code || 'SCH').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-    const decisionId = `DEC-${schemeTag}-${Date.now().toString(36).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const ruleVersion = scheme.rule_version || scheme.ruleVersion || '1.0.0';
+    const decisionId = this.generateDeterministicDecisionId(scheme, citizen, householdMembers, ruleVersion);
 
     return {
       decisionId,

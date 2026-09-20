@@ -174,35 +174,160 @@
 /* ============================================ */
 /* RESPONSIVE — Citizen Portal                   */
 /* ============================================ */
+
+/* Desktop defaults: mobile header & bottom nav hidden */
+.citizen-mobile-header {
+  display: none;
+}
+
+.citizen-mobile-bottom-nav {
+  display: none;
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 31, 58, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 99;
+  animation: fadeIn 200ms ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @media (max-width: 1024px) {
   .app-shell {
     grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
   }
+
+  /* Mobile Sticky Header */
+  .citizen-mobile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 90;
+    background: #FFFDF9;
+    border-bottom: 1px solid var(--border);
+    padding: 10px 16px;
+    box-shadow: 0 1px 6px rgba(11, 31, 58, 0.05);
+  }
+
+  .mobile-hamburger-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--ink-navy);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+  }
+
+  .mobile-hamburger-btn:active {
+    background: var(--paper-dark);
+  }
+
+  /* Off-canvas slide-out sidebar */
   .sidebar {
     position: fixed;
-    left: -280px;
+    left: -290px;
     top: 0;
     bottom: 0;
-    width: 260px;
-    z-index: var(--z-sidebar, 100);
-    transition: left 0.3s ease;
+    width: 275px;
+    z-index: 100;
+    box-shadow: none;
+    transition: left 0.28s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.28s ease;
   }
+
   .sidebar.open {
     left: 0;
+    box-shadow: 6px 0 24px rgba(11, 31, 58, 0.25);
   }
+
   .main-content {
-    padding: 1rem;
+    padding: 1.25rem 1rem 85px 1rem;
     margin-left: 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Persistent Mobile Bottom Navigation Bar */
+  .citizen-mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 62px;
+    background: #FFFDF9;
+    border-top: 1px solid var(--border);
+    z-index: 95;
+    justify-content: space-around;
+    align-items: center;
+    padding: 4px 6px;
+    box-shadow: 0 -3px 12px rgba(11, 31, 58, 0.06);
+  }
+
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: var(--slate);
+    text-decoration: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: color 180ms ease, transform 150ms ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .bottom-nav-item svg {
+    transition: transform 180ms ease;
+  }
+
+  .bottom-nav-item.active {
+    color: var(--seal-vermillion);
+    font-weight: 700;
+  }
+
+  .bottom-nav-item.active svg {
+    transform: translateY(-1px);
+  }
+
+  .bottom-nav-btn {
+    color: var(--ink-navy);
   }
 }
 
 @media (max-width: 640px) {
   .main-content {
-    padding: 0.75rem;
+    padding: 1rem 0.75rem 85px 0.75rem;
   }
+
   .stat-card-grid,
   .dashboard-grid {
     grid-template-columns: 1fr;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
   }
 }
 
@@ -214,4 +339,5 @@
     transform: rotate(360deg);
   }
 }
+
 

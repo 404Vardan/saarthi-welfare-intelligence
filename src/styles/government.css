@@ -97,6 +97,9 @@
 /* RESPONSIVE — Government Portal                */
 /* ============================================ */
 @media (max-width: 1024px) {
+  .gov-mobile-header {
+    display: flex !important;
+  }
   .gov-shell {
     grid-template-columns: 1fr;
   }

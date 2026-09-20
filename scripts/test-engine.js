@@ -619,6 +619,57 @@ assertEqual(testAuditLogEmission('cit-01', 'CITIZEN_LOGIN'), true, 'Standard cit
 assertEqual(testAuditLogEmission('adm-01', 'CHANGE_USER_ROLE'), true, 'Admin privileged audit event permitted');
 
 // ----------------------------------------------------
+// TEST GROUP 9: Deterministic Decision IDs & Client/Server Income Parity (Phase E3.5)
+// ----------------------------------------------------
+console.log('\n--- TEST GROUP 9: Deterministic Decision IDs & Income Parity (E3.5) ---');
+
+// 9a. Identical profile yields identical deterministic decision ID across independent calls
+const evalA = EligibilityEngine.evaluateScheme(persona1, [], pmKisanScheme, p1Docs);
+const evalB = EligibilityEngine.evaluateScheme(persona1, [], pmKisanScheme, p1Docs);
+assertEqual(evalA.decisionId, evalB.decisionId, 'Identical profile evaluations produce byte-for-byte identical decision IDs');
+assert(evalA.decisionId.startsWith('DEC-PMKISAN-'), 'Decision ID contains sanitized scheme code prefix');
+
+// 9b. Changed income produces different decision ID
+const persona1DiffIncome = { ...persona1, income_annual: 125000 };
+const evalDiffIncome = EligibilityEngine.evaluateScheme(persona1DiffIncome, [], pmKisanScheme, p1Docs);
+assert(evalA.decisionId !== evalDiffIncome.decisionId, 'Modified income yields divergent deterministic decision ID');
+
+// 9c. Changed age produces different decision ID
+const persona1DiffAge = { ...persona1, age: 43 };
+const evalDiffAge = EligibilityEngine.evaluateScheme(persona1DiffAge, [], pmKisanScheme, p1Docs);
+assert(evalA.decisionId !== evalDiffAge.decisionId, 'Modified age yields divergent deterministic decision ID');
+
+// 9d. Changed scheme rule version produces different decision ID
+const pmKisanV2 = { ...pmKisanScheme, rule_version: '2.0.0' };
+const evalDiffVersion = EligibilityEngine.evaluateScheme(persona1, [], pmKisanV2, p1Docs);
+assert(evalA.decisionId !== evalDiffVersion.decisionId, 'Upgraded scheme rule_version yields divergent deterministic decision ID');
+
+// 9e. Completely missing household income yields undefined and 3-valued insufficient_data
+const missingIncomeCitizen = { name: 'Priya Sharma', occupation: 'farmer', age: 30 };
+const missingIncomeCalc = EligibilityEngine.computeHouseholdIncome(missingIncomeCitizen, []);
+assertEqual(missingIncomeCalc, undefined, 'Completely missing citizen & member income resolves to undefined');
+
+const missingIncomeContext = EligibilityEngine.buildContext(missingIncomeCitizen, [], []);
+assertEqual(missingIncomeContext.household.aggregate_income, undefined, 'Context household.aggregate_income is undefined when income missing');
+
+const incomePredicateNode = { field: 'citizen.income_annual', op: 'LTE', value: 250000, label: 'Income <= 2.5L' };
+const missingIncomeEval = EligibilityEngine.evaluateNode(incomePredicateNode, missingIncomeContext);
+assertEqual(missingIncomeEval.status, 'insufficient_data', 'Missing income evaluated against ceiling returns insufficient_data (not default 0)');
+assertEqual(missingIncomeEval.passed, false, 'Missing income does not pass ceiling test');
+
+// 9f. Explicit 0 income is distinguished from missing income
+const zeroIncomeCitizen = { name: 'Sunita Devi', occupation: 'farmer', age: 30, income_annual: 0 };
+const zeroIncomeCalc = EligibilityEngine.computeHouseholdIncome(zeroIncomeCitizen, []);
+assertEqual(zeroIncomeCalc, 0, 'Explicit 0 income computes to numeric 0 (not undefined)');
+
+const zeroIncomeContext = EligibilityEngine.buildContext(zeroIncomeCitizen, [], []);
+assertEqual(zeroIncomeContext.household.aggregate_income, 0, 'Context household.aggregate_income is numeric 0 for zero-income citizen');
+
+const zeroIncomeEval = EligibilityEngine.evaluateNode(incomePredicateNode, zeroIncomeContext);
+assertEqual(zeroIncomeEval.status, 'passed', 'Explicit 0 income passes <= 2.5L ceiling test');
+assertEqual(zeroIncomeEval.passed, true, 'Zero income is recognized as valid passed value');
+
+// ----------------------------------------------------
 // SUMMARY
 // ----------------------------------------------------
 console.log('\n====================================================');

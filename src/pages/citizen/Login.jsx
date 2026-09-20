@@ -5,7 +5,17 @@ import { useAuth } from '../../context/AuthContext';
 export default function CitizenLogin() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, signUp, signInWithGoogle, forgotPassword, user, role, loading: authLoading } = useAuth();
+  const {
+    signIn,
+    signUp,
+    signInWithGoogle,
+    forgotPassword,
+    activateDemoPersona,
+    STATUTORY_TEST_PERSONAS,
+    user,
+    role,
+    loading: authLoading
+  } = useAuth();
 
   const [activeTab, setActiveTab] = useState('signin');
   const [email, setEmail] = useState('');
@@ -13,11 +23,29 @@ export default function CitizenLogin() {
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [oauthLoading, setOauthLoading] = useState(false);
+  const [personaLoadingKey, setPersonaLoadingKey] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const redirectPath = location.state?.from?.pathname || '/citizen/dashboard';
+
+  const handleSelectPersona = async (personaKey) => {
+    setPersonaLoadingKey(personaKey);
+    setErrorMsg('');
+    try {
+      const res = await activateDemoPersona(personaKey);
+      if (res.success) {
+        navigate('/citizen/recommendations', { replace: true });
+      } else {
+        setErrorMsg(res.error || 'Failed to activate demo persona.');
+      }
+    } catch (err) {
+      setErrorMsg(err.message || 'Error loading persona');
+    } finally {
+      setPersonaLoadingKey(null);
+    }
+  };
 
   // Auto-redirect if already authenticated as citizen
   useEffect(() => {
@@ -410,6 +438,65 @@ export default function CitizenLogin() {
                 </form>
               )}
             </>
+          )}
+
+          {/* ⚡ 1-Click Evaluation Personas for Zero-Friction Academic / Beta Review */}
+          {STATUTORY_TEST_PERSONAS && (
+            <div style={{
+              marginTop: '1.5rem',
+              padding: '1.1rem',
+              background: 'rgba(166,135,61,0.06)',
+              border: '1px solid rgba(166,135,61,0.3)',
+              borderRadius: '8px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--ink-navy)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  ⚡ Instant 1-Click Test Personas
+                </span>
+                <span style={{ fontSize: '0.68rem', background: 'var(--brass-gold)', color: 'white', padding: '2px 7px', borderRadius: '3px', fontWeight: 600, textTransform: 'uppercase' }}>
+                  Reviewer Quick-Fill
+                </span>
+              </div>
+              <p style={{ fontSize: '0.74rem', color: 'var(--slate)', margin: '0 0 10px 0', lineHeight: 1.4 }}>
+                Evaluate deterministic rules & decision traces across real personas without manual profile entry:
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                {Object.entries(STATUTORY_TEST_PERSONAS).map(([key, p]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => handleSelectPersona(key)}
+                    disabled={personaLoadingKey !== null}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '8px 10px',
+                      background: '#FFFDF9',
+                      border: '1px solid var(--border)',
+                      borderRadius: '5px',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 150ms ease'
+                    }}
+                    onMouseOver={e => { e.currentTarget.style.borderColor = 'var(--brass-gold)'; e.currentTarget.style.background = '#FFFFFF'; }}
+                    onMouseOut={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = '#FFFDF9'; }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ink-navy)' }}>
+                        {p.name} <span style={{ fontSize: '0.72rem', color: 'var(--seal-vermillion)', fontWeight: 500 }}>· {p.badge}</span>
+                      </div>
+                      <div style={{ fontSize: '0.68rem', color: 'var(--slate)', marginTop: '2px' }}>
+                        {p.tagline}
+                      </div>
+                    </div>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--brass-gold)', fontWeight: 700, whiteSpace: 'nowrap', marginLeft: '8px' }}>
+                      {personaLoadingKey === key ? 'Loading...' : 'Launch →'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
 
           {/* Hint */}

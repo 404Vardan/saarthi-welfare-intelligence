@@ -12,40 +12,59 @@ import {
   FileSpreadsheet,
   Search,
   Settings,
-  LogOut
+  LogOut,
+  Menu,
+  X
 } from 'lucide-react';
 
 export default function GovernmentLayout() {
   const { signOut } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
-
-  const handleNavigate = () => setMobileMenuOpen(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await signOut();
     navigate('/government/login');
   };
 
+  const closeMenu = () => setMobileMenuOpen(false);
+
   return (
     <div className="gov-shell">
-      {mobileMenuOpen && (
-        <button className="mobile-menu-overlay" aria-label="Close navigation" onClick={() => setMobileMenuOpen(false)} />
-      )}
-      <header className="mobile-shell-bar" style={{ background: '#071220', color: '#fff', borderColor: 'rgba(255,255,255,0.08)' }}>
-        <div className="mobile-shell-brand">
-          <div className="brand-seal-mark">G</div>
-          <div>
-            <div className="brand-name">SAARTHI // GOV</div>
-            <div className="brand-tagline">National Welfare Intelligence</div>
-          </div>
+      {/* Mobile Header Bar */}
+      <header className="gov-mobile-header" style={{
+        display: 'none',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '10px 16px',
+        background: '#0B1F3A',
+        color: 'white',
+        borderBottom: '1px solid rgba(255,255,255,0.1)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(prev => !prev)}
+            style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '4px' }}
+          >
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1rem', color: '#E8C547' }}>
+            SAARTHI // GOV
+          </span>
         </div>
-        <button className="mobile-menu-button" style={{ background: '#11223A', color: '#fff', borderColor: 'rgba(255,255,255,0.15)' }} aria-label="Toggle navigation" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(v => !v)}>
-          <Search size={18} />
-        </button>
       </header>
+
+      {/* Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          onClick={closeMenu}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99 }}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className={`gov-sidebar ${mobileMenuOpen ? "open" : ""}`}>
+      <aside className={`gov-sidebar ${mobileMenuOpen ? 'open' : ''}`}>
         {/* Brand */}
         <div className="sidebar-brand">
           <div className="brand-seal-mark">G</div>
@@ -59,51 +78,51 @@ export default function GovernmentLayout() {
         <nav className="gov-nav">
           {/* 1. OVERVIEW */}
           <div className="gov-section-title">OVERVIEW</div>
-          <NavLink to="/government/dashboard" className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
+          <NavLink to="/government/dashboard" onClick={closeMenu} className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`}>
             <LayoutDashboard size={16} />
             <span>Command Center</span>
           </NavLink>
 
           {/* 2. INTELLIGENCE */}
           <div className="gov-section-title">INTELLIGENCE</div>
-          <NavLink to="/government/districts" className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
+          <NavLink to="/government/districts" onClick={closeMenu} className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`}>
             <MapPin size={16} />
             <span>District Intelligence</span>
           </NavLink>
-          <NavLink to="/government/gap-analysis" className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
+          <NavLink to="/government/gap-analysis" onClick={closeMenu} className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`}>
             <AlertTriangle size={16} />
             <span>Welfare Gaps</span>
           </NavLink>
-          <NavLink to="/government/performance" className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
+          <NavLink to="/government/performance" onClick={closeMenu} className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`}>
             <BarChart3 size={16} />
             <span>Scheme Performance</span>
           </NavLink>
-          <NavLink to="/government/fraud" className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
+          <NavLink to="/government/fraud" onClick={closeMenu} className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`}>
             <ShieldAlert size={16} />
             <span>Risk Intelligence</span>
           </NavLink>
 
           {/* 3. POLICY */}
           <div className="gov-section-title">POLICY</div>
-          <NavLink to="/government/policy-lab" className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
+          <NavLink to="/government/policy-lab" onClick={closeMenu} className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`}>
             <Scale size={16} />
             <span>Policy Lab</span>
           </NavLink>
 
           {/* 4. REPORTS */}
           <div className="gov-section-title">REPORTS</div>
-          <NavLink to="/government/reports" className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
+          <NavLink to="/government/reports" onClick={closeMenu} className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`}>
             <FileSpreadsheet size={16} />
             <span>Reports & Exports</span>
           </NavLink>
 
           {/* 5. ACCOUNT */}
           <div className="gov-section-title">ACCOUNT</div>
-          <NavLink to="/government/audit" className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
+          <NavLink to="/government/audit" onClick={closeMenu} className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`}>
             <Search size={16} />
             <span>Citizen Audit</span>
           </NavLink>
-          <NavLink to="/government/settings" className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
+          <NavLink to="/government/settings" onClick={closeMenu} className={({ isActive }) => `gov-nav-link ${isActive ? 'active' : ''}`}>
             <Settings size={16} />
             <span>Settings</span>
           </NavLink>

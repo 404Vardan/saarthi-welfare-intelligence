@@ -23,6 +23,16 @@ export default function CitizenSchemeDetail() {
   const hasApplied = applications.some(a => a.schemeId === id);
   const isSaved = savedSchemes.includes(scheme?.id);
 
+  const portalUrl = scheme?.portal_url || scheme?.application_url || (
+    scheme?.official_name?.toLowerCase().includes('kisan') || scheme?.scheme_code?.includes('KISAN') ? 'https://pmkisan.gov.in' :
+    scheme?.official_name?.toLowerCase().includes('ayushman') || scheme?.scheme_code?.includes('PMJAY') ? 'https://beneficiary.nha.gov.in' :
+    scheme?.official_name?.toLowerCase().includes('scholarship') || scheme?.scheme_code?.includes('MATRIC') ? 'https://scholarships.gov.in' :
+    scheme?.official_name?.toLowerCase().includes('vishwakarma') ? 'https://pmvishwakarma.gov.in' :
+    scheme?.official_name?.toLowerCase().includes('svanidhi') ? 'https://pmsvanidhi.mohua.gov.in' :
+    scheme?.official_name?.toLowerCase().includes('matru') || scheme?.scheme_code?.includes('PMMVY') ? 'https://pmmvy.wcd.gov.in' :
+    'https://www.myscheme.gov.in'
+  );
+
   if (!scheme) {
     return (
       <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
@@ -99,6 +109,19 @@ export default function CitizenSchemeDetail() {
               >
                 <Layers size={14} /> Compare
               </Link>
+
+              {portalUrl && (
+                <a
+                  href={portalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary btn-sm"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', textDecoration: 'none' }}
+                  title="Open Official Government Portal"
+                >
+                  <ExternalLink size={13} /> Official Portal ↗
+                </a>
+              )}
             </div>
 
             {hasApplied ? (

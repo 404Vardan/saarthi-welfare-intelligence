@@ -10,7 +10,9 @@ import {
   BarChart3,
   ShieldCheck,
   Activity,
-  LogOut
+  LogOut,
+  Menu,
+  X
 } from 'lucide-react';
 
 export default function OperationsLayout() {
@@ -38,22 +40,44 @@ export default function OperationsLayout() {
     navigate('/operations/login');
   };
 
+  const closeMenu = () => setMobileMenuOpen(false);
+
   return (
     <div className="ops-layout">
-      {mobileMenuOpen && (
-        <button className="mobile-menu-overlay" aria-label="Close navigation" onClick={() => setMobileMenuOpen(false)} />
-      )}
-      <header className="mobile-shell-bar" style={{ background: '#0d1526', color: '#fff', borderColor: 'rgba(255,255,255,0.08)' }}>
-        <div className="mobile-shell-brand">
-          <div className="brand-name" style={{ color: '#e8c547' }}>SAARTHI</div>
-          <div className="brand-tagline" style={{ color: 'rgba(255,255,255,0.45)' }}>Platform Control Center</div>
+      {/* Mobile Header Bar */}
+      <header className="ops-mobile-header" style={{
+        display: 'none',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '10px 16px',
+        background: '#0B1F3A',
+        color: 'white',
+        borderBottom: '1px solid rgba(255,255,255,0.1)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(prev => !prev)}
+            style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: '4px' }}
+          >
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '1rem', color: '#e8c547' }}>
+            Saarthi // Operations
+          </span>
         </div>
-        <button className="mobile-menu-button" style={{ background: '#111b30', color: '#fff', borderColor: 'rgba(255,255,255,0.15)' }} aria-label="Toggle navigation" aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(v => !v)}>
-          <Activity size={18} />
-        </button>
       </header>
+
+      {/* Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          onClick={closeMenu}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 99 }}
+        />
+      )}
+
       {/* SIDEBAR */}
-      <aside className={`ops-sidebar ${mobileMenuOpen ? "open" : ""}`}>
+      <aside className={`ops-sidebar ${mobileMenuOpen ? 'open' : ''}`}>
         <div className="sidebar-logo">
           <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
             <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 700, color: '#e8c547' }}>

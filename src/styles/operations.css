@@ -315,6 +315,9 @@
 /* RESPONSIVE — Operations Portal               */
 /* ============================================ */
 @media (max-width: 1024px) {
+  .ops-mobile-header {
+    display: flex !important;
+  }
   .ops-layout {
     grid-template-columns: 1fr;
   }

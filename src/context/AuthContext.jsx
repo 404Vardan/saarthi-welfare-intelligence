@@ -10,6 +10,174 @@ const AuthContext = createContext();
 const LOCAL_PROFILE_KEY = 'saarthi_welfare_profile';
 const LOCAL_HOUSEHOLD_KEY = 'saarthi_welfare_household';
 
+export const STATUTORY_TEST_PERSONAS = {
+  farmer: {
+    key: 'farmer',
+    id: 'demo-farmer-01',
+    name: 'Ramesh Patel',
+    role: 'citizen',
+    badge: 'Marginal Farmer',
+    tagline: 'Land < 2 Acres · Surat, Gujarat · Target: PM-KISAN & PMFBY',
+    profile: {
+      id: 'demo-farmer-01',
+      full_name: 'Ramesh Patel',
+      age: 42,
+      gender: 'male',
+      occupation: 'farmer',
+      income_annual: 120000,
+      land_ownership: 'below_2_acres',
+      land_holding_acres: 1.8,
+      house_ownership: 'kuccha',
+      area_type: 'rural',
+      state: 'Gujarat',
+      district: 'Surat',
+      pincode: '395007',
+      category: 'obc',
+      bpl_card: true,
+      disability: false,
+      is_farmer: true,
+      is_student: false
+    },
+    household: [
+      { id: 'hh-01', name: 'Kamla Patel', relation: 'Spouse', age: 39, occupation: 'homemaker', income_annual: 0 },
+      { id: 'hh-02', name: 'Suresh Patel', relation: 'Child', age: 14, occupation: 'student', income_annual: 0 }
+    ],
+    documents: [
+      { id: 'doc-f1', name: 'Aadhaar Card', category: 'identity', status: 'verified', docNumber: 'XXXX-XXXX-9812' },
+      { id: 'doc-f2', name: 'Land Record (7/12 RoR)', category: 'land', status: 'verified', docNumber: 'ROR-GJ-7712' },
+      { id: 'doc-f3', name: 'Bank Passbook (DBT Linked)', category: 'financial', status: 'verified', docNumber: 'SBI-991823' }
+    ]
+  },
+  student: {
+    key: 'student',
+    id: 'demo-student-02',
+    name: 'Pooja Meghwal',
+    role: 'citizen',
+    badge: 'SC College Student',
+    tagline: 'Undergraduate · Jaipur, Rajasthan · Target: Post-Matric SC Scholarship',
+    profile: {
+      id: 'demo-student-02',
+      full_name: 'Pooja Meghwal',
+      age: 20,
+      gender: 'female',
+      occupation: 'student',
+      income_annual: 180000,
+      state: 'Rajasthan',
+      district: 'Jaipur',
+      pincode: '302001',
+      category: 'sc',
+      education_level: 'undergraduate',
+      bpl_card: true,
+      disability: false,
+      is_student: true,
+      is_farmer: false
+    },
+    household: [
+      { id: 'hh-s1', name: 'Ramkaran Meghwal', relation: 'Father', age: 48, occupation: 'daily_wage', income_annual: 140000 }
+    ],
+    documents: [
+      { id: 'doc-s1', name: 'Aadhaar Card', category: 'identity', status: 'verified', docNumber: 'XXXX-XXXX-4532' },
+      { id: 'doc-s2', name: 'Caste Certificate (SC)', category: 'category', status: 'verified', docNumber: 'SC-RJ-2024-910' },
+      { id: 'doc-s3', name: 'College Enrollment & Fee Receipt', category: 'financial', status: 'verified', docNumber: 'COL-2026-881' }
+    ]
+  },
+  woman_head: {
+    key: 'woman_head',
+    id: 'demo-woman-03',
+    name: 'Anjali Devi',
+    role: 'citizen',
+    badge: 'Woman Beneficiary / Mother',
+    tagline: 'BPL Mother · Patna, Bihar · Target: PMMVY & PM Ujjwala',
+    profile: {
+      id: 'demo-woman-03',
+      full_name: 'Anjali Devi',
+      age: 24,
+      gender: 'female',
+      occupation: 'homemaker',
+      income_annual: 90000,
+      state: 'Bihar',
+      district: 'Patna',
+      pincode: '800001',
+      category: 'obc',
+      bpl_card: true,
+      is_pregnant_or_lactating: true,
+      is_woman_head: true,
+      is_student: false,
+      is_farmer: false
+    },
+    household: [
+      { id: 'hh-w1', name: 'Manoj Kumar', relation: 'Spouse', age: 27, occupation: 'artisan', income_annual: 90000 },
+      { id: 'hh-w2', name: 'Aarav', relation: 'Child', age: 1, occupation: 'none', income_annual: 0 }
+    ],
+    documents: [
+      { id: 'doc-w1', name: 'Aadhaar Card', category: 'identity', status: 'verified', docNumber: 'XXXX-XXXX-6129' },
+      { id: 'doc-w2', name: 'Mother Child Protection (MCP) Card', category: 'household', status: 'verified', docNumber: 'MCP-BR-2025' },
+      { id: 'doc-w3', name: 'BPL Ration Card', category: 'household', status: 'verified', docNumber: 'BPL-882910' }
+    ]
+  },
+  artisan: {
+    key: 'artisan',
+    id: 'demo-artisan-04',
+    name: 'Kallu Mistri',
+    role: 'citizen',
+    badge: 'Traditional Artisan',
+    tagline: 'Carpenter / Woodcraft · Bhopal, MP · Target: PM Vishwakarma',
+    profile: {
+      id: 'demo-artisan-04',
+      full_name: 'Kallu Mistri',
+      age: 34,
+      gender: 'male',
+      occupation: 'artisan',
+      trade: 'carpenter',
+      income_annual: 140000,
+      state: 'Madhya Pradesh',
+      district: 'Bhopal',
+      pincode: '462001',
+      category: 'obc',
+      bpl_card: false,
+      is_farmer: false,
+      is_student: false
+    },
+    household: [
+      { id: 'hh-a1', name: 'Radha Mistri', relation: 'Spouse', age: 31, occupation: 'homemaker', income_annual: 0 }
+    ],
+    documents: [
+      { id: 'doc-a1', name: 'Aadhaar Card', category: 'identity', status: 'verified', docNumber: 'XXXX-XXXX-3341' },
+      { id: 'doc-a2', name: 'Artisan Trade Verification', category: 'identity', status: 'verified', docNumber: 'VISH-MP-9012' }
+    ]
+  },
+  senior: {
+    key: 'senior',
+    id: 'demo-senior-05',
+    name: 'Devaki Amma',
+    role: 'citizen',
+    badge: 'Senior Citizen (68 yrs)',
+    tagline: 'BPL Senior · Kollam, Kerala · Target: IGNOAPS Pension',
+    profile: {
+      id: 'demo-senior-05',
+      full_name: 'Devaki Amma',
+      age: 68,
+      gender: 'female',
+      occupation: 'homemaker',
+      income_annual: 36000,
+      state: 'Kerala',
+      district: 'Kollam',
+      pincode: '691001',
+      category: 'general',
+      bpl_card: true,
+      is_senior: true,
+      is_farmer: false,
+      is_student: false
+    },
+    household: [],
+    documents: [
+      { id: 'doc-sn1', name: 'Aadhaar Card (Age Proof 68)', category: 'identity', status: 'verified', docNumber: 'XXXX-XXXX-1102' },
+      { id: 'doc-sn2', name: 'BPL Ration Card', category: 'household', status: 'verified', docNumber: 'BPL-KL-7728' },
+      { id: 'doc-sn3', name: 'Bank Passbook (DBT)', category: 'financial', status: 'verified', docNumber: 'CANARA-88192' }
+    ]
+  }
+};
+
 export function AuthProvider({ children }) {
   // ── Core Auth State ──
   const [user, setUser] = useState(null);
@@ -178,7 +346,32 @@ export function AuthProvider({ children }) {
 
     // Initial session bootstrap
     supabase.auth.getSession().then(({ data: { session } }) => {
-      syncSession(session);
+      if (session) {
+        syncSession(session);
+      } else {
+        // Check for cached demo persona session
+        try {
+          const cachedDemo = localStorage.getItem('saarthi_demo_user');
+          const cachedProf = localStorage.getItem(LOCAL_PROFILE_KEY);
+          const cachedHh = localStorage.getItem(LOCAL_HOUSEHOLD_KEY);
+          if (cachedDemo && cachedProf) {
+            const dUser = JSON.parse(cachedDemo);
+            const cProf = JSON.parse(cachedProf);
+            const cHh = cachedHh ? JSON.parse(cachedHh) : [];
+            if (isMounted) {
+              setUser(dUser);
+              setRole('citizen');
+              setProfile(cProf);
+              setHousehold(cHh);
+              setLoading(false);
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('[Saarthi Auth] Demo restore notice:', e.message);
+        }
+        syncSession(null);
+      }
     }).catch(err => {
       console.error('[Saarthi Auth] getSession error:', err.message);
       if (isMounted) setLoading(false);
@@ -551,6 +744,45 @@ export function AuthProvider({ children }) {
     return [];
   };
 
+  // ── 1-Click Evaluation Persona Activation (Zero Friction Evaluator / Beta Testing) ──
+  const activateDemoPersona = async (personaKey) => {
+    const persona = STATUTORY_TEST_PERSONAS[personaKey];
+    if (!persona) return { success: false, error: 'Persona not found' };
+
+    const demoUser = {
+      id: persona.id,
+      email: `${personaKey}@beta.saarthi.gov.in`,
+      full_name: persona.name,
+      is_demo: true
+    };
+
+    setUser(demoUser);
+    setRole('citizen');
+    setProfile(persona.profile);
+    setHousehold(persona.household);
+    setDocuments(persona.documents);
+
+    localStorage.setItem('saarthi_demo_user', JSON.stringify(demoUser));
+    localStorage.setItem(LOCAL_PROFILE_KEY, JSON.stringify(persona.profile));
+    localStorage.setItem(LOCAL_HOUSEHOLD_KEY, JSON.stringify(persona.household));
+
+    // Ensure schemes are available & compute deterministic evaluation
+    let currentSchemes = schemes;
+    if (!currentSchemes || currentSchemes.length === 0) {
+      try {
+        currentSchemes = await SchemesData.fetchAllSchemes();
+        setSchemes(currentSchemes);
+      } catch {
+        currentSchemes = [];
+      }
+    }
+
+    const evalResults = EligibilityEngine.evaluateEligibility(persona.profile, persona.household, currentSchemes);
+    setEvaluations(evalResults);
+
+    return { success: true, persona };
+  };
+
   // ── Role checking helpers ──
   const isCitizen = role === 'citizen';
   const isGovernment = role === 'government';
@@ -572,6 +804,8 @@ export function AuthProvider({ children }) {
       signUp,
       signOut,
       forgotPassword,
+      activateDemoPersona,
+      STATUTORY_TEST_PERSONAS,
       // Citizen welfare data
       profile,
       household,

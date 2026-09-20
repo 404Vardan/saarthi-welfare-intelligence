@@ -152,6 +152,52 @@ export default function OpsAnalytics() {
             </ul>
           </div>
         </div>
+
+        {/* Live Incoming Reviews Stream */}
+        <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <h4 style={{ margin: 0, fontFamily: 'var(--font-display)', color: 'var(--ink-navy)', fontSize: '1rem' }}>
+              Recent Citizen Review Submissions ({feedbackList?.length || 0} New)
+            </h4>
+            <span style={{ fontSize: '0.72rem', color: 'var(--brass-gold)', fontFamily: 'var(--font-mono)', fontWeight: 600 }}>
+              ● LIVE TELEMETRY
+            </span>
+          </div>
+
+          {feedbackList && feedbackList.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {feedbackList.slice(0, 5).map((fb, idx) => (
+                <div key={idx} style={{ padding: '10px 14px', background: 'var(--paper)', borderRadius: '4px', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                  <div>
+                    <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--ink-navy)', marginRight: '8px' }}>
+                      {fb.contextTitle || fb.contextId || 'Scheme Match'}
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--slate)' }}>
+                      ({fb.reason || 'General evaluation'})
+                    </span>
+                    {fb.comment && (
+                      <p style={{ margin: '4px 0 0 0', fontSize: '0.78rem', color: 'var(--ink-navy)', fontStyle: 'italic' }}>
+                        "{fb.comment}"
+                      </p>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: fb.sentiment === 'positive' ? 'var(--ledger-green)' : 'var(--seal-vermillion)' }}>
+                      {fb.sentiment === 'positive' ? '👍 Helpful' : '👎 Reported Issue'}
+                    </span>
+                    <span style={{ fontSize: '0.7rem', color: 'var(--slate)', fontFamily: 'var(--font-mono)' }}>
+                      {fb.timestamp ? new Date(fb.timestamp).toLocaleTimeString() : 'Recent'}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '1.25rem', background: 'var(--paper)', borderRadius: '4px', border: '1px dashed var(--border)', fontSize: '0.82rem', color: 'var(--slate)' }}>
+              No incoming citizen feedback recorded yet in this session. Submit reviews on recommendation cards or scheme details to view them here.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
