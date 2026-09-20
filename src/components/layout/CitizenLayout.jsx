@@ -30,6 +30,9 @@ export default function CitizenLayout() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleNavigate = () => setMobileMenuOpen(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -38,8 +41,33 @@ export default function CitizenLayout() {
 
   return (
     <div className="app-shell">
+      {mobileMenuOpen && (
+        <button
+          className="mobile-menu-overlay"
+          aria-label="Close navigation"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      <header className="mobile-shell-bar">
+        <div className="mobile-shell-brand">
+          <div className="brand-seal-mark">S</div>
+          <div>
+            <div className="brand-name">SAARTHI</div>
+            <div className="brand-tagline">National Welfare System</div>
+          </div>
+        </div>
+        <button
+          className="mobile-menu-button"
+          aria-label={mobileMenuOpen ? 'Close navigation' : 'Open navigation'}
+          aria-expanded={mobileMenuOpen}
+          onClick={() => setMobileMenuOpen(v => !v)}
+        >
+          <Command size={18} />
+        </button>
+      </header>
       {/* Grouped Sidebar Navigation */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${mobileMenuOpen ? "open" : ""}`}>
         {/* Brand & Language Selector */}
         <div className="sidebar-brand" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -83,70 +111,70 @@ export default function CitizenLayout() {
         <nav className="sidebar-nav">
           {/* 1. HOME */}
           <div className="sidebar-section-title">HOME</div>
-          <NavLink to="/citizen/dashboard" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <NavLink to="/citizen/dashboard" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
             <LayoutDashboard size={16} />
             <span>{t('dashboard')}</span>
           </NavLink>
 
           {/* 2. MY WELFARE */}
           <div className="sidebar-section-title">MY WELFARE</div>
-          <NavLink to="/citizen/profile" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <NavLink to="/citizen/profile" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
             <UserCheck size={16} />
             <span>{t('welfarePassport')}</span>
           </NavLink>
-          <NavLink to="/citizen/household" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <NavLink to="/citizen/household" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
             <Users size={16} />
             <span>{t('household')}</span>
           </NavLink>
-          <NavLink to="/citizen/documents" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <NavLink to="/citizen/documents" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
             <FolderLock size={16} />
             <span>{t('documentVault')}</span>
           </NavLink>
-          <NavLink to="/citizen/benefits" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <NavLink to="/citizen/benefits" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
             <Wallet size={16} />
             <span>{t('benefitsWallet')}</span>
           </NavLink>
 
           {/* 3. DISCOVER */}
           <div className="sidebar-section-title">DISCOVER</div>
-          <NavLink to="/citizen/explorer" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <NavLink to="/citizen/explorer" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
             <Compass size={16} />
             <span>{t('schemesCatalogue')}</span>
           </NavLink>
-          <NavLink to="/citizen/recommendations" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <NavLink to="/citizen/recommendations" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
             <Sparkles size={16} />
             <span>{t('aiRecommendations')}</span>
           </NavLink>
-          <NavLink to="/citizen/compare" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <NavLink to="/citizen/compare" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
             <Layers size={16} />
             <span>{t('compareSchemes')}</span>
           </NavLink>
 
           {/* 4. MY JOURNEY */}
           <div className="sidebar-section-title">MY JOURNEY</div>
-          <NavLink to="/citizen/action-plan" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <NavLink to="/citizen/action-plan" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
             <CheckSquare size={16} />
             <span>{t('applyProcess')}</span>
           </NavLink>
-          <NavLink to="/citizen/applications" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <NavLink to="/citizen/applications" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
             <FileCheck2 size={16} />
             <span>{t('trackStatus')}</span>
           </NavLink>
-          <NavLink to="/citizen/notifications" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <NavLink to="/citizen/notifications" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
             <Bell size={16} />
             <span>{t('notifications')}</span>
           </NavLink>
 
           {/* 5. ASSIST */}
           <div className="sidebar-section-title">ASSIST</div>
-          <NavLink to="/citizen/assistant" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <NavLink to="/citizen/assistant" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
             <Bot size={16} />
             <span>{t('askSaarthi')}</span>
           </NavLink>
 
           {/* 6. ACCOUNT */}
           <div className="sidebar-section-title">ACCOUNT</div>
-          <NavLink to="/citizen/settings" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+          <NavLink to="/citizen/settings" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`} onClick={handleNavigate}>
             <Settings size={16} />
             <span>Settings</span>
           </NavLink>
