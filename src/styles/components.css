@@ -664,3 +664,248 @@
   }
 }
 
+
+
+/* ========================================================
+   SAARTHI MOBILE SHELL — PRODUCTION RESPONSIVE LAYER
+   ======================================================== */
+
+.mobile-shell-bar,
+.mobile-menu-button,
+.mobile-menu-overlay {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .mobile-shell-bar {
+    display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 110;
+    min-height: 58px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    background: #FAF9F5;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .mobile-shell-brand {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+  }
+
+  .mobile-shell-brand .brand-seal-mark {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
+
+  .mobile-shell-brand .brand-name {
+    font-size: 1rem;
+  }
+
+  .mobile-shell-brand .brand-tagline {
+    font-size: 0.58rem;
+  }
+
+  .mobile-menu-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: #FFFDF8;
+    color: var(--ink-navy);
+    cursor: pointer;
+  }
+
+  .mobile-menu-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    background: rgba(7, 18, 32, 0.48);
+    backdrop-filter: blur(2px);
+  }
+
+  .app-shell,
+  .gov-shell {
+    display: block;
+    min-height: 100vh;
+  }
+
+  .sidebar,
+  .gov-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: min(84vw, 300px);
+    height: 100dvh;
+    transform: translateX(-105%);
+    transition: transform 220ms ease;
+    z-index: 130;
+    box-shadow: 8px 0 30px rgba(0,0,0,0.18);
+  }
+
+  .sidebar.open,
+  .gov-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main-content,
+  .gov-content {
+    width: 100%;
+    min-width: 0;
+    min-height: calc(100dvh - 58px);
+    max-height: none;
+    overflow: visible;
+    padding: 18px 16px 88px;
+  }
+
+  .main-content > *,
+  .gov-content > * {
+    max-width: 100%;
+  }
+
+  .table-wrap,
+  .responsive-table,
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table,
+  .table-ledger,
+  .gov-table,
+  .ops-table {
+    min-width: 620px;
+  }
+
+  .card,
+  .gov-card,
+  .ops-card {
+    max-width: 100%;
+  }
+
+  .page-header {
+    gap: 14px;
+  }
+
+  .page-header > * {
+    max-width: 100%;
+  }
+
+  .btn,
+  .btn-lg,
+  .ops-btn {
+    min-height: 42px;
+  }
+
+  input,
+  select,
+  textarea,
+  .form-input,
+  .form-select,
+  .form-textarea,
+  .ops-input,
+  .ops-select,
+  .ops-textarea {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  html {
+    font-size: 15px;
+  }
+
+  .mobile-shell-bar {
+    min-height: 54px;
+    padding: 8px 12px;
+  }
+
+  .main-content,
+  .gov-content {
+    padding: 14px 12px 80px;
+  }
+
+  .page-title,
+  .gov-page-title {
+    font-size: 1.4rem;
+  }
+
+  .page-description,
+  .gov-page-subtitle {
+    font-size: 0.82rem;
+  }
+
+  .card,
+  .gov-card {
+    padding: 16px;
+  }
+
+  .stats-grid,
+  .gov-kpi-strip,
+  .gov-grid-2,
+  .profile-form,
+  .document-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .btn {
+    white-space: normal;
+    text-align: center;
+  }
+
+  .timeline {
+    overflow-x: auto;
+    justify-content: flex-start;
+    gap: 18px;
+    padding-bottom: 12px;
+  }
+
+  .timeline-item {
+    flex: 0 0 112px;
+  }
+
+  .chat-container {
+    height: calc(100dvh - 170px);
+    min-height: 420px;
+  }
+
+  .chat-message {
+    max-width: 92%;
+  }
+
+  .chat-input-area {
+    flex-wrap: wrap;
+  }
+
+  .chat-input-area input,
+  .chat-input-area textarea {
+    min-width: 0;
+    flex: 1 1 100%;
+  }
+
+  .stamp {
+    width: 84px;
+    height: 84px;
+    font-size: 9px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .gov-sidebar {
+    transition: none;
+  }
+}
