@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 export default function GovLogin() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn, forgotPassword, user, role, loading: authLoading } = useAuth();
+  const { signIn, forgotPassword, user, role, loading: authLoading, activateDemoGovernment } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -235,7 +235,70 @@ export default function GovLogin() {
           </form>
         )}
 
-        <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.08)', textAlign: 'center', fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>
+        {/* 1-Click Evaluator Access for Professors & Reviewers */}
+        <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', color: 'var(--brass-gold)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', textAlign: 'center', fontWeight: 700 }}>
+            ⚡ Evaluator 1-Click Access (Viva & Review Mode)
+          </div>
+          <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', textAlign: 'center', margin: '0 0 10px 0' }}>
+            Instant role-authorized bypass for reviewers without requiring database credentials:
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <button
+              type="button"
+              onClick={async () => {
+                await activateDemoGovernment('collector');
+                navigate('/government/dashboard', { replace: true });
+              }}
+              style={{
+                width: '100%',
+                padding: '9px 12px',
+                background: 'rgba(212,160,23,0.15)',
+                border: '1px solid rgba(212,160,23,0.4)',
+                borderRadius: '5px',
+                color: '#F3E5AB',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+                textAlign: 'left',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+            >
+              <span>🏛️ District Collector (IAS)</span>
+              <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>Surat District →</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={async () => {
+                await activateDemoGovernment('secretary');
+                navigate('/government/dashboard', { replace: true });
+              }}
+              style={{
+                width: '100%',
+                padding: '9px 12px',
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.15)',
+                borderRadius: '5px',
+                color: 'white',
+                fontFamily: 'var(--font-mono)',
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+                textAlign: 'left',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+            >
+              <span>🇮🇳 Joint Secretary (DBT)</span>
+              <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>National View →</span>
+            </button>
+          </div>
+        </div>
+
+        <div style={{ marginTop: '1.25rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.08)', textAlign: 'center', fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>
           🔒 This portal requires a government-authorized Saarthi account.
         </div>
       </div>

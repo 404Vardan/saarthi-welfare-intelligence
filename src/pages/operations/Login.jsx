@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 export default function OpsLogin() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn } = useAuth();
+  const { signIn, activateDemoAdmin } = useAuth();
 
   const [email, setEmail] = useState('');
   const [passphrase, setPassphrase] = useState('');
@@ -84,13 +84,44 @@ export default function OpsLogin() {
           </button>
         </form>
 
+        {/* 1-Click Evaluator Access for Review III */}
+        <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ fontSize: '11px', fontFamily: 'var(--font-mono)', color: '#e8c547', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px', textAlign: 'center', fontWeight: 700 }}>
+            ⚡ Evaluator 1-Click Access (Viva & Review Mode)
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              await activateDemoAdmin();
+              navigate(redirectPath, { replace: true });
+            }}
+            className="ops-btn"
+            style={{
+              width: '100%',
+              background: 'rgba(232, 197, 71, 0.15)',
+              border: '1px solid rgba(232, 197, 71, 0.4)',
+              color: '#fef08a',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '13px',
+              padding: '10px 14px',
+              cursor: 'pointer',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
+            <span>⚙️ Launch as Operations Lead (Vardan)</span>
+            <span style={{ fontSize: '11px', opacity: 0.7 }}>Registry & Rules →</span>
+          </button>
+        </div>
+
         <div style={{ marginTop: '24px', textAlign: 'center' }}>
           <Link to="/" style={{ color: 'rgba(255,255,255,0.4)', fontSize: '13px', textDecoration: 'none' }}>
             ← Back to Saarthi Homepage
           </Link>
         </div>
 
-        <div style={{ marginTop: '32px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.3)' }}>
+        <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center', fontSize: '12px', color: 'rgba(255,255,255,0.3)' }}>
           🔒 Authorized platform administrators only.
         </div>
       </div>

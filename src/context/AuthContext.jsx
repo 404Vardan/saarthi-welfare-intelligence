@@ -354,13 +354,14 @@ export function AuthProvider({ children }) {
           const cachedDemo = localStorage.getItem('saarthi_demo_user');
           const cachedProf = localStorage.getItem(LOCAL_PROFILE_KEY);
           const cachedHh = localStorage.getItem(LOCAL_HOUSEHOLD_KEY);
-          if (cachedDemo && cachedProf) {
+          const cachedRole = localStorage.getItem('saarthi_demo_role') || 'citizen';
+          if (cachedDemo) {
             const dUser = JSON.parse(cachedDemo);
-            const cProf = JSON.parse(cachedProf);
+            const cProf = cachedProf ? JSON.parse(cachedProf) : null;
             const cHh = cachedHh ? JSON.parse(cachedHh) : [];
             if (isMounted) {
               setUser(dUser);
-              setRole('citizen');
+              setRole(cachedRole);
               setProfile(cProf);
               setHousehold(cHh);
               setLoading(false);
@@ -763,6 +764,7 @@ export function AuthProvider({ children }) {
     setDocuments(persona.documents);
 
     localStorage.setItem('saarthi_demo_user', JSON.stringify(demoUser));
+    localStorage.setItem('saarthi_demo_role', 'citizen');
     localStorage.setItem(LOCAL_PROFILE_KEY, JSON.stringify(persona.profile));
     localStorage.setItem(LOCAL_HOUSEHOLD_KEY, JSON.stringify(persona.household));
 
@@ -781,6 +783,39 @@ export function AuthProvider({ children }) {
     setEvaluations(evalResults);
 
     return { success: true, persona };
+  };
+
+  // ── 1-Click Government Official Demo Activation (Evaluator & Viva Review) ──
+  const activateDemoGovernment = async (title = 'collector') => {
+    const isCollector = title === 'collector';
+    const demoGovUser = {
+      id: 'demo-gov-official-01',
+      email: isCollector ? 'collector.surat@gujarat.gov.in' : 'jointsec.welfare@gov.in',
+      full_name: isCollector ? 'Dr. Neha Verma, IAS (District Collector)' : 'Rajeev Sharma (Joint Secretary, Direct Benefit Transfer)',
+      is_demo: true
+    };
+
+    setUser(demoGovUser);
+    setRole('government');
+    localStorage.setItem('saarthi_demo_user', JSON.stringify(demoGovUser));
+    localStorage.setItem('saarthi_demo_role', 'government');
+    return { success: true, user: demoGovUser };
+  };
+
+  // ── 1-Click Operations Admin Demo Activation (Registry & Versioning) ──
+  const activateDemoAdmin = async () => {
+    const demoAdminUser = {
+      id: 'demo-admin-ops-01',
+      email: 'admin.registry@saarthi.gov.in',
+      full_name: 'Vardan (System Lead & Registry Administrator)',
+      is_demo: true
+    };
+
+    setUser(demoAdminUser);
+    setRole('admin');
+    localStorage.setItem('saarthi_demo_user', JSON.stringify(demoAdminUser));
+    localStorage.setItem('saarthi_demo_role', 'admin');
+    return { success: true, user: demoAdminUser };
   };
 
   // ── Role checking helpers ──
@@ -805,6 +840,8 @@ export function AuthProvider({ children }) {
       signOut,
       forgotPassword,
       activateDemoPersona,
+      activateDemoGovernment,
+      activateDemoAdmin,
       STATUTORY_TEST_PERSONAS,
       // Citizen welfare data
       profile,
