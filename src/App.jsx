@@ -1,5 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
 
 // Layouts
 import PublicLayout from './components/layout/PublicLayout';
@@ -58,6 +59,7 @@ import OpsLogin from './pages/operations/Login';
 
 export default function App() {
   return (
+    <>
     <Routes>
       {/* 1. Public Landing & Legal */}
       <Route element={<PublicLayout />}>
@@ -142,5 +144,7 @@ export default function App() {
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    <Analytics />
+    </>
   );
 }
