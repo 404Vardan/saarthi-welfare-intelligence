@@ -97,10 +97,16 @@ export default function CitizenLogin() {
     }
     setLoading(true);
     setErrorMsg('');
+    setSuccessMsg('');
     const res = await signUp(email.trim(), password, fullName.trim());
     setLoading(false);
     if (res.success) {
-      navigate(redirectPath, { replace: true });
+      if (res.needsEmailVerification) {
+        setSuccessMsg('Account created successfully! Please check your email to verify your account before signing in.');
+        setActiveTab('signin');
+      } else {
+        navigate(redirectPath, { replace: true });
+      }
     } else {
       setErrorMsg(res.error || 'Failed to create account.');
     }
@@ -292,6 +298,12 @@ export default function CitizenLogin() {
                   Create Account
                 </button>
               </div>
+
+              {successMsg && (
+                <div style={{ background: 'rgba(34,139,34,0.1)', color: '#228B22', padding: '10px', borderRadius: '4px', fontSize: '0.85rem', marginBottom: '1rem', border: '1px solid rgba(34,139,34,0.3)' }}>
+                  ✓ {successMsg}
+                </div>
+              )}
 
               {errorMsg && (
                 <div style={{ background: 'rgba(193,68,45,0.1)', color: 'var(--seal-vermillion)', padding: '10px', borderRadius: '4px', fontSize: '0.85rem', marginBottom: '1rem', border: '1px solid rgba(193,68,45,0.3)' }}>

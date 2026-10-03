@@ -177,19 +177,41 @@ CREATE POLICY "users_manage_own_notifications" ON notifications FOR ALL USING (a
 ALTER TABLE synthetic_citizens ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "public_read_synthetic_citizens" ON synthetic_citizens FOR SELECT USING (true);
 
--- TRIGGER for auto-creating profile on signup
-CREATE OR REPLACE FUNCTION handle_new_user()
+-- TRIGGER for auto-creating profile and citizen role on signup
+CREATE OR REPLACE FUNCTION handle_new_user_bootstrap()
 RETURNS TRIGGER AS $$
+DECLARE
+  extracted_name TEXT;
 BEGIN
-  INSERT INTO profiles (id, full_name)
-  VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'full_name', 'New User'));
+  extracted_name := COALESCE(
+    NEW.raw_user_meta_data->>'full_name',
+    NEW.raw_user_meta_data->>'name',
+    SPLIT_PART(NEW.email, '@', 1),
+    'Citizen'
+  );
+
+  INSERT INTO public.profiles (id, full_name, created_at, updated_at)
+  VALUES (NEW.id, extracted_name, NOW(), NOW())
+  ON CONFLICT (id) DO UPDATE
+  SET full_name = EXCLUDED.full_name,
+      updated_at = NOW()
+  WHERE public.profiles.full_name IS NULL OR public.profiles.full_name = '';
+
+  IF NOT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = NEW.id) THEN
+    INSERT INTO public.user_roles (user_id, role)
+    VALUES (NEW.id, 'citizen')
+    ON CONFLICT (user_id, role) DO NOTHING;
+  END IF;
+
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP TRIGGER IF EXISTS on_auth_user_role_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+  FOR EACH ROW EXECUTE FUNCTION handle_new_user_bootstrap();
 
 -- SEED DATA — 15 REAL INDIAN WELFARE SCHEMES
 INSERT INTO schemes (name, short_name, benefit, benefit_amount, rules, type, beneficiary_tags, gov_level, processing_days, success_rate, popularity_score, income_limit, ministry) VALUES

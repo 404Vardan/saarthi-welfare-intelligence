@@ -302,46 +302,47 @@ export function AuthProvider({ children }) {
   // ── 2. Unified Session Synchronizer with Concurrency Lock ──
   useEffect(() => {
     let isMounted = true;
-    let syncing = false;
+    let pendingSync = null;
 
     const syncSession = async (session) => {
-      if (syncing) return;
-      syncing = true;
+      const performSync = async () => {
+        try {
+          if (session?.user) {
+            const u = {
+              id: session.user.id,
+              email: session.user.email,
+              full_name: session.user.user_metadata?.full_name || 
+                         session.user.user_metadata?.name || 
+                         session.user.email?.split('@')[0] || 
+                         'Citizen'
+            };
+            if (isMounted) setUser(u);
 
-      try {
-        if (session?.user) {
-          const u = {
-            id: session.user.id,
-            email: session.user.email,
-            full_name: session.user.user_metadata?.full_name || 
-                       session.user.user_metadata?.name || 
-                       session.user.email?.split('@')[0] || 
-                       'Citizen'
-          };
-          if (isMounted) setUser(u);
-
-          const { profile: resProfile, role: resRole } = await ensureProfileAndRole(session.user);
-          if (isMounted) {
-            setProfile(resProfile);
-            setRole(resRole);
+            const { profile: resProfile, role: resRole } = await ensureProfileAndRole(session.user);
+            if (isMounted) {
+              setProfile(resProfile);
+              setRole(resRole);
+            }
+          } else {
+            if (isMounted) {
+              setUser(null);
+              setRole(null);
+              setProfile(null);
+              setHousehold([]);
+              setEvaluations([]);
+              setApplications([]);
+              setDocuments([]);
+            }
           }
-        } else {
-          if (isMounted) {
-            setUser(null);
-            setRole(null);
-            setProfile(null);
-            setHousehold([]);
-            setEvaluations([]);
-            setApplications([]);
-            setDocuments([]);
-          }
+        } catch (err) {
+          console.error('[Saarthi Auth] Auth synchronization error:', err.message);
+        } finally {
+          if (isMounted) setLoading(false);
         }
-      } catch (err) {
-        console.error('[Saarthi Auth] Auth synchronization error:', err.message);
-      } finally {
-        syncing = false;
-        if (isMounted) setLoading(false);
-      }
+      };
+
+      pendingSync = (pendingSync ? pendingSync.then(performSync, performSync) : performSync());
+      return pendingSync;
     };
 
     // Initial session bootstrap
@@ -434,12 +435,21 @@ export function AuthProvider({ children }) {
         const { profile: resProfile, role: resRole } = await ensureProfileAndRole(data.user);
         setProfile(resProfile);
         setRole(resRole);
+
+        // Fail-closed: do not report success if database role was not resolved
+        if (!resRole) {
+          return {
+            success: false,
+            error: 'Account authenticated, but no role is assigned in the database. Please contact an administrator.'
+          };
+        }
+
         return { success: true, role: resRole };
       }
       return { success: false, error: 'Authentication failed. Please check your credentials.' };
     } catch (err) {
       console.error('[Saarthi] Sign in error:', err.message);
-      return { success: false, error: 'Unable to connect to authentication service. Please try again.' };
+      return { success: false, error: err.message || 'Unable to connect to authentication service. Please try again.' };
     }
   };
 
@@ -478,7 +488,26 @@ export function AuthProvider({ children }) {
       if (error) {
         return { success: false, error: error.message };
       }
-      if (data?.user) {
+
+      // Check if user already exists (Supabase obfuscates existing users when email confirmation is enabled by returning empty identities)
+      if (data?.user?.identities && data.user.identities.length === 0) {
+        return {
+          success: false,
+          error: 'An account with this email address already exists. Please sign in instead.'
+        };
+      }
+
+      // Case 1: Supabase requires email confirmation (data.session is null)
+      if (data?.user && !data.session) {
+        return {
+          success: true,
+          needsEmailVerification: true,
+          user: { id: data.user.id, email: data.user.email, full_name: fullName }
+        };
+      }
+
+      // Case 2: Email confirmation is disabled (active session returned immediately)
+      if (data?.user && data.session) {
         const u = { id: data.user.id, email: data.user.email, full_name: fullName };
         setUser(u);
         const { profile: resProfile, role: resRole } = await ensureProfileAndRole({
@@ -486,14 +515,22 @@ export function AuthProvider({ children }) {
           user_metadata: { full_name: fullName }
         });
         setProfile(resProfile);
-        setRole(resRole || 'citizen');
+        setRole(resRole);
 
-        return { success: true, role: resRole || 'citizen' };
+        if (!resRole) {
+          return {
+            success: false,
+            error: 'Account created, but citizen role could not be verified from the database. Please sign in.'
+          };
+        }
+
+        return { success: true, needsEmailVerification: false, role: resRole };
       }
+
       return { success: false, error: 'Account creation failed. Please try again.' };
     } catch (err) {
       console.error('[Saarthi] Sign up error:', err.message);
-      return { success: false, error: err.message };
+      return { success: false, error: err.message || 'Registration service unavailable. Please try again.' };
     }
   };
 
