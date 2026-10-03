@@ -657,16 +657,20 @@ export const EligibilityEngine = {
     // Check Documents
     const docEval = this.evaluateDocuments(citizenDocuments, scheme.documents || scheme.required_documents || []);
 
-    // Determine Final Status with 3-Valued Precision
+    // Determine Final Status with 3-Valued Precision and Rule Completeness Safety
     let status = 'eligible';
     const totalFails = criticalFails + moderateFails;
+    const ruleCompleteness = scheme.rule_completeness || 'VERIFIED';
 
-    if (missingDataCount > 0 && totalFails === 0) {
+    if (ruleCompleteness === 'INFORMATIONAL_ONLY') {
+      // Deterministic engine must never treat an informational / unverified scheme as an authoritative pass
+      status = 'informational_only';
+    } else if (missingDataCount > 0 && totalFails === 0) {
       status = 'insufficient_data';
     } else if (totalFails === 0 && missingDataCount === 0) {
-      status = 'eligible';
+      status = ruleCompleteness === 'PARTIALLY_VERIFIED' ? 'partially_verified' : 'eligible';
     } else if (criticalFails === 0 && moderateFails <= 1) {
-      status = 'nearly_eligible';
+      status = ruleCompleteness === 'PARTIALLY_VERIFIED' ? 'partially_verified' : 'nearly_eligible';
     } else if (criticalFails === 1 && moderateFails === 0 && hasNearMiss) {
       status = 'nearly_eligible';
     } else if (totalFails <= 2 && hasNearMiss) {
@@ -677,7 +681,7 @@ export const EligibilityEngine = {
 
     const matchPercentage = totalWeight > 0
       ? Math.round((passedWeight / totalWeight) * 100)
-      : 100;
+      : (ruleCompleteness === 'INFORMATIONAL_ONLY' ? 50 : 100);
 
     const ruleVersion = scheme.rule_version || scheme.ruleVersion || '1.0.0';
     const decisionId = this.generateDeterministicDecisionId(scheme, citizen, householdMembers, ruleVersion);
@@ -696,6 +700,8 @@ export const EligibilityEngine = {
       ministry: scheme.ministry,
       department: scheme.department,
       status,
+      ruleCompleteness,
+      rule_completeness: ruleCompleteness,
       matchPercentage,
       missingDataCount,
       missingFields: flatBreakdown.filter(b => b.isMissingData || b.status === 'insufficient_data').map(b => b.field),

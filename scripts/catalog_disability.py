@@ -1,0 +1,235 @@
+# scripts/catalog_disability.py
+
+def get_schemes():
+    return [
+        {
+            'id': 'disab-udid-card-260',
+            'code': 'UDID-CARD',
+            'name': 'Unique Disability ID (UDID - Swavlamban Card)',
+            'short_name': 'UDID Divyangjan Card',
+            'ministry': 'Ministry of Social Justice and Empowerment',
+            'state': 'All-India',
+            'category': 'disability',
+            'beneficiary_types': ['disabled', 'divyangjan'],
+            'desc': 'Single sovereign digital identity card for Persons with Disabilities, valid nationwide across all transport (railways, buses, airlines), health, and welfare schemes without needing multiple medical certificates.',
+            'benefit': 'Universal nationwide disability passport granting 75% rail concession, bus concessions, and prioritized welfare',
+            'quantum': 'Universal Digital Identity & Statutory Concessions',
+            'type': 'in_kind_and_services',
+            'days': 15,
+            'rules': [
+                {'field': 'citizen.disability_status', 'op': 'EQ', 'value': True, 'label': 'Person with Benchmark Disability (≥ 40%)', 'impact': 'critical'}
+            ],
+            'flatRules': {'disability_required': True},
+            'docs': ['Disability Medical Certificate issued by CMO / Medical Board', 'Aadhaar Card', 'Passport Photograph'],
+            'url': 'https://www.swavlambancard.gov.in',
+            'completeness': 'VERIFIED'
+        },
+        {
+            'id': 'disab-adip-appliances-261',
+            'code': 'ADIP-SCHEME',
+            'name': 'Assistance to Disabled Persons for Purchase/Fitting of Aids and Appliances (ADIP)',
+            'short_name': 'ADIP Free Assistive Devices',
+            'ministry': 'Ministry of Social Justice and Empowerment',
+            'state': 'All-India',
+            'category': 'disability',
+            'beneficiary_types': ['disabled', 'divyangjan', 'children'],
+            'desc': '100% free distribution of sophisticated aids: motorized tricycles, smart canes, digital hearing aids, Braille laptops, wheelchairs, artificial limbs, and cochlear implants up to ₹6 Lakh for deaf children under 5 years.',
+            'benefit': '100% free motorized tricycles, wheelchairs, hearing aids, or cochlear implants',
+            'quantum': 'Free Assistive Appliances (Worth up to ₹6,00,000 for Cochlear Implant)',
+            'type': 'in_kind_and_services',
+            'days': 30,
+            'rules': [
+                {'field': 'citizen.disability_status', 'op': 'EQ', 'value': True, 'label': 'Benchmark Disability ≥ 40%', 'impact': 'critical'},
+                {'field': 'household.income_annual', 'op': 'LTE', 'value': 270000, 'label': 'Monthly Income ≤ ₹22,500 (Annual ≤ ₹2.7 Lakh for 100% grant)', 'impact': 'critical'}
+            ],
+            'flatRules': {'disability_required': True, 'income_limit': 270000},
+            'docs': ['Disability Certificate (40% or more)', 'Income Certificate', 'Aadhaar Card', 'UDID Card'],
+            'url': 'https://adip.depwd.gov.in',
+            'completeness': 'VERIFIED'
+        },
+        {
+            'id': 'disab-nhfdc-credit-262',
+            'code': 'NHFDC-SWAVALAMBAN',
+            'name': 'Divyangjan Swavalamban Concessional Loan Scheme (NHFDC / NDFDC)',
+            'short_name': 'NHFDC Concessional Loans for Divyangjan',
+            'ministry': 'Ministry of Social Justice and Empowerment',
+            'state': 'All-India',
+            'category': 'disability',
+            'beneficiary_types': ['disabled', 'entrepreneur', 'self_employed'],
+            'desc': 'Highly subsidized self-employment loans up to ₹50 Lakh at low interest rates (4% to 8% p.a. with 1% additional rebate for women with disabilities) with zero collateral up to ₹5 Lakh.',
+            'benefit': 'Subsidized 4% interest business loans up to ₹50,00,000 for starting enterprises',
+            'quantum': 'Up to ₹50,00,000 Concessional Credit at 4%-8% Interest',
+            'type': 'concessional_credit',
+            'days': 30,
+            'rules': [
+                {'field': 'citizen.disability_status', 'op': 'EQ', 'value': True, 'label': 'Person with Disability (≥ 40%)', 'impact': 'critical'},
+                {'field': 'citizen.age', 'op': 'GTE', 'value': 18, 'label': 'Age ≥ 18 Years', 'impact': 'critical'}
+            ],
+            'flatRules': {'disability_required': True, 'age_min': 18},
+            'docs': ['UDID Card / Disability Certificate', 'Project Proposal', 'Aadhaar Card', 'Bank Account Details'],
+            'url': 'https://www.nhfdc.nic.in',
+            'completeness': 'VERIFIED'
+        },
+        {
+            'id': 'disab-niramaya-insurance-263',
+            'code': 'NIRAMAYA-INSURANCE',
+            'name': 'Niramaya Health Insurance Scheme for Persons with Disabilities',
+            'short_name': 'Niramaya Health Insurance (₹1 Lakh)',
+            'ministry': 'Ministry of Social Justice and Empowerment',
+            'state': 'All-India',
+            'category': 'insurance',
+            'beneficiary_types': ['disabled', 'autism', 'cerebral_palsy', 'mental_retardation'],
+            'desc': 'Affordable health insurance cover up to ₹1,00,000 per year across entire India for autism, cerebral palsy, mental retardation, and multiple disabilities, with premium 100% subsidized for BPL families.',
+            'benefit': 'Cashless and reimbursement hospital cover up to ₹1,00,000 (including OPD, therapy, dental & surgery)',
+            'quantum': '₹1,00,000 Annual Health Insurance Cover',
+            'type': 'insurance',
+            'days': 15,
+            'rules': [
+                {'field': 'citizen.disability_status', 'op': 'EQ', 'value': True, 'label': 'Autism, Cerebral Palsy, Intellectual Disability, or Multiple Disabilities', 'impact': 'critical'}
+            ],
+            'flatRules': {'disability_required': True},
+            'docs': ['National Trust Disability Certificate / UDID Card', 'BPL Card (for free tier) or Income Proof', 'Bank Passbook'],
+            'url': 'https://thenationaltrust.gov.in',
+            'completeness': 'VERIFIED'
+        },
+        {
+            'id': 'disab-scholarship-pre-264',
+            'code': 'PWD-SCHOLARSHIP-PRE',
+            'name': 'Pre-Matric Scholarship for Students with Disabilities',
+            'short_name': 'Pre-Matric Scholarship for Divyangjan',
+            'ministry': 'Ministry of Social Justice and Empowerment',
+            'state': 'All-India',
+            'category': 'scholarships',
+            'beneficiary_types': ['disabled', 'student'],
+            'desc': 'Financial support including monthly maintenance allowance of ₹500 (day scholars) and ₹800 (hostellers) plus annual book grant of ₹1,000 and disability allowances for students in Classes 9 & 10.',
+            'benefit': 'Monthly maintenance allowance + ₹1,000 book grant + reader allowance for visually impaired',
+            'quantum': 'Up to ₹10,600 / year financial aid',
+            'type': 'direct_benefit',
+            'days': 30,
+            'rules': [
+                {'field': 'citizen.disability_status', 'op': 'EQ', 'value': True, 'label': 'Benchmark Disability ≥ 40%', 'impact': 'critical'},
+                {'field': 'citizen.occupation', 'op': 'EQ', 'value': 'student', 'label': 'Enrolled in Class 9 or 10', 'impact': 'critical'},
+                {'field': 'household.income_annual', 'op': 'LTE', 'value': 250000, 'label': 'Family Annual Income ≤ ₹2.5 Lakh', 'impact': 'critical'}
+            ],
+            'flatRules': {'disability_required': True, 'occupation': ['student'], 'income_limit': 250000},
+            'docs': ['Disability Certificate (40%+)', 'Income Certificate', 'School Enrollment Certificate', 'Bank Passbook'],
+            'url': 'https://scholarships.gov.in',
+            'completeness': 'VERIFIED'
+        },
+        {
+            'id': 'disab-scholarship-post-265',
+            'code': 'PWD-SCHOLARSHIP-POST',
+            'name': 'Post-Matric Scholarship for Students with Disabilities',
+            'short_name': 'Post-Matric Scholarship for Divyangjan',
+            'ministry': 'Ministry of Social Justice and Empowerment',
+            'state': 'All-India',
+            'category': 'scholarships',
+            'beneficiary_types': ['disabled', 'student'],
+            'desc': 'Reimbursement of 100% compulsory tuition fees, study tour expenses, thesis charges, and monthly maintenance allowance up to ₹1,600/month for students with disabilities in Class 11 through Post-Graduation.',
+            'benefit': 'Full tuition fee reimbursement + monthly maintenance allowance up to ₹19,200/year',
+            'quantum': '100% Tuition Fees + ₹19,200 Maintenance',
+            'type': 'direct_benefit',
+            'days': 30,
+            'rules': [
+                {'field': 'citizen.disability_status', 'op': 'EQ', 'value': True, 'label': 'Benchmark Disability ≥ 40%', 'impact': 'critical'},
+                {'field': 'citizen.occupation', 'op': 'EQ', 'value': 'student', 'label': 'Enrolled in Recognized Post-Matric Degree/Diploma', 'impact': 'critical'},
+                {'field': 'household.income_annual', 'op': 'LTE', 'value': 250000, 'label': 'Family Annual Income ≤ ₹2.5 Lakh', 'impact': 'critical'}
+            ],
+            'flatRules': {'disability_required': True, 'occupation': ['student'], 'income_limit': 250000},
+            'docs': ['UDID Card / Disability Certificate', 'Income Certificate', 'College Fee Receipt', 'Previous Year Marksheet'],
+            'url': 'https://scholarships.gov.in',
+            'completeness': 'VERIFIED'
+        },
+        {
+            'id': 'disab-top-class-edu-266',
+            'code': 'PWD-TOP-CLASS-EDU',
+            'name': 'Scholarship for Top Class Education for Students with Disabilities',
+            'short_name': 'Top Class Education for Divyangjan',
+            'ministry': 'Ministry of Social Justice and Empowerment',
+            'state': 'All-India',
+            'category': 'scholarships',
+            'beneficiary_types': ['disabled', 'student'],
+            'desc': 'Full non-refundable tuition fees up to ₹4 Lakh per annum, monthly maintenance of ₹3,000, book grant of ₹5,000, and one-time assistive computer/device aid of ₹30,000 in premier notified institutes.',
+            'benefit': 'Full tuition fees + ₹36,000/year living allowance + ₹30,000 laptop/assistive device grant',
+            'quantum': 'Up to ₹4 Lakh Fees + ₹36,000 Living Allowance',
+            'type': 'direct_benefit',
+            'days': 30,
+            'rules': [
+                {'field': 'citizen.disability_status', 'op': 'EQ', 'value': True, 'label': 'Benchmark Disability ≥ 40%', 'impact': 'critical'},
+                {'field': 'citizen.occupation', 'op': 'EQ', 'value': 'student', 'label': 'Admitted in Notified Premier Institution (IIT, IIM, NLU, etc.)', 'impact': 'critical'},
+                {'field': 'household.income_annual', 'op': 'LTE', 'value': 800000, 'label': 'Family Annual Income ≤ ₹8.0 Lakh', 'impact': 'critical'}
+            ],
+            'flatRules': {'disability_required': True, 'occupation': ['student'], 'income_limit': 800000},
+            'docs': ['UDID Card', 'Admission Letter of Premier Institute', 'Income Certificate', 'Fee Structure Receipt'],
+            'url': 'https://scholarships.gov.in',
+            'completeness': 'VERIFIED'
+        },
+        {
+            'id': 'disab-nos-overseas-267',
+            'code': 'PWD-NATIONAL-OVERSEAS',
+            'name': 'National Overseas Scholarship for Students with Disabilities',
+            'short_name': 'National Overseas Scholarship (Divyangjan)',
+            'ministry': 'Ministry of Social Justice and Empowerment',
+            'state': 'All-India',
+            'category': 'scholarships',
+            'beneficiary_types': ['disabled', 'student'],
+            'desc': 'Full central sponsorship for 20 candidates with disabilities annually to pursue Masters degrees and PhDs in foreign universities, covering 100% tuition, airfare, medical insurance, and living stipend.',
+            'benefit': '100% foreign tuition fees + $15,400 USD annual living allowance + international airfare',
+            'quantum': '100% Foreign Tuition & Living Stipend',
+            'type': 'direct_benefit',
+            'days': 60,
+            'rules': [
+                {'field': 'citizen.disability_status', 'op': 'EQ', 'value': True, 'label': 'Benchmark Disability ≥ 40%', 'impact': 'critical'},
+                {'field': 'citizen.age', 'op': 'LTE', 'value': 35, 'label': 'Age ≤ 35 Years', 'impact': 'critical'},
+                {'field': 'household.income_annual', 'op': 'LTE', 'value': 800000, 'label': 'Total Annual Family Income ≤ ₹8.0 Lakh', 'impact': 'critical'}
+            ],
+            'flatRules': {'disability_required': True, 'age_max': 35, 'income_limit': 800000},
+            'docs': ['UDID Card', 'Foreign University Admission Letter', 'Qualifying Degree Marksheet (≥ 55%)', 'Passport'],
+            'url': 'https://disabilityaffairs.gov.in',
+            'completeness': 'VERIFIED'
+        },
+        {
+            'id': 'disab-vikas-daycare-268',
+            'code': 'VIKAS-DAYCARE',
+            'name': 'Vikas Day Care Scheme for Persons with Severe Disabilities',
+            'short_name': 'Vikas Day Care Scheme',
+            'ministry': 'Ministry of Social Justice and Empowerment',
+            'state': 'All-India',
+            'category': 'disability',
+            'beneficiary_types': ['disabled', 'autism', 'cerebral_palsy'],
+            'desc': 'Day care centres providing 6 hours daily specialized care, occupational therapy, speech therapy, activities of daily living (ADL) training, and caregiver respite for individuals with autism, cerebral palsy, and intellectual disability.',
+            'benefit': 'Free therapeutic day care, vocational training, nutritious meals, and caregiver respite',
+            'quantum': 'Free Day Care & Therapy Services',
+            'type': 'in_kind_and_services',
+            'days': 15,
+            'rules': [
+                {'field': 'citizen.disability_status', 'op': 'EQ', 'value': True, 'label': 'National Trust Covered Disability', 'impact': 'critical'}
+            ],
+            'flatRules': {'disability_required': True},
+            'docs': ['UDID Card / Disability Certificate', 'National Trust Legal Guardianship Certificate (if applicable)', 'Aadhaar Card'],
+            'url': 'https://thenationaltrust.gov.in',
+            'completeness': 'VERIFIED'
+        },
+        {
+            'id': 'disab-sugamya-bharat-269',
+            'code': 'SUGAMYA-BHARAT',
+            'name': 'Accessible India Campaign (Sugamya Bharat Abhiyan)',
+            'short_name': 'Sugamya Bharat Accessibility Drive',
+            'ministry': 'Ministry of Social Justice and Empowerment',
+            'state': 'All-India',
+            'category': 'disability',
+            'beneficiary_types': ['disabled', 'senior_citizen'],
+            'desc': 'Creation of universally barrier-free accessible public transport, government buildings, airports, railway stations, and digital public portals compliant with GIGW and WCAG accessibility standards.',
+            'benefit': 'Ramps, tactile paths, wheelchair-accessible lifts, sign language interpreters & Sugamya Bharat App grievance redressal',
+            'quantum': 'Universal Barrier-Free Public Access Infrastructure',
+            'type': 'in_kind_and_services',
+            'days': 7,
+            'rules': [
+                {'field': 'citizen.disability_status', 'op': 'EQ', 'value': True, 'label': 'Person with Disability / Mobility Constraint', 'impact': 'moderate'}
+            ],
+            'flatRules': {'disability_required': True},
+            'docs': ['Aadhaar Card / UDID Card (Optional on Sugamya Bharat App)'],
+            'url': 'https://accessibleindia.gov.in',
+            'completeness': 'INFORMATIONAL_ONLY'
+        }
+    ]

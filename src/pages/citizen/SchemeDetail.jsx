@@ -70,6 +70,16 @@ export default function CitizenSchemeDetail() {
               <span className="badge" style={{ background: 'var(--paper)', color: 'var(--slate)' }}>
                 Rule {scheme.version || scheme.rule_version || 'v1.0'}
               </span>
+              {scheme.rule_completeness && (
+                <span className="badge" style={{
+                  background: scheme.rule_completeness === 'VERIFIED' ? '#E8F5E9' : (scheme.rule_completeness === 'PARTIALLY_VERIFIED' ? '#FFF8E1' : '#F5F5F5'),
+                  color: scheme.rule_completeness === 'VERIFIED' ? 'var(--success-forest)' : (scheme.rule_completeness === 'PARTIALLY_VERIFIED' ? 'var(--brass-gold)' : 'var(--slate)'),
+                  fontWeight: 600,
+                  fontSize: '11px'
+                }}>
+                  {scheme.rule_completeness === 'VERIFIED' ? '✓ VERIFIED RULES' : (scheme.rule_completeness === 'PARTIALLY_VERIFIED' ? '⚡ PARTIALLY VERIFIED' : 'ℹ INFORMATIONAL ONLY')}
+                </span>
+              )}
             </div>
 
             <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.6rem', color: 'var(--ink-navy)', margin: '4px 0 8px 0' }}>

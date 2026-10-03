@@ -489,7 +489,7 @@ export function AuthProvider({ children }) {
         return { success: false, error: error.message };
       }
 
-      // Check if user already exists (Supabase obfuscates existing users when email confirmation is enabled by returning empty identities)
+      // Check if user already exists (Supabase returns empty identities if account exists)
       if (data?.user?.identities && data.user.identities.length === 0) {
         return {
           success: false,
@@ -497,34 +497,33 @@ export function AuthProvider({ children }) {
         };
       }
 
-      // Case 1: Supabase requires email confirmation (data.session is null)
-      if (data?.user && !data.session) {
-        return {
-          success: true,
-          needsEmailVerification: true,
-          user: { id: data.user.id, email: data.user.email, full_name: fullName }
-        };
+      let activeSession = data?.session;
+      let activeUser = data?.user;
+
+      // If active session wasn't returned directly on signUp, establish it immediately via password sign-in
+      if (!activeSession && activeUser) {
+        try {
+          const loginAttempt = await supabase.auth.signInWithPassword({ email, password });
+          if (loginAttempt.data?.session) {
+            activeSession = loginAttempt.data.session;
+            activeUser = loginAttempt.data.user;
+          }
+        } catch (loginErr) {
+          console.warn('[Saarthi Auth] Post-signup instant session note:', loginErr.message);
+        }
       }
 
-      // Case 2: Email confirmation is disabled (active session returned immediately)
-      if (data?.user && data.session) {
-        const u = { id: data.user.id, email: data.user.email, full_name: fullName };
+      if (activeUser) {
+        const u = { id: activeUser.id, email: activeUser.email, full_name: fullName };
         setUser(u);
         const { profile: resProfile, role: resRole } = await ensureProfileAndRole({
-          ...data.user,
+          ...activeUser,
           user_metadata: { full_name: fullName }
         });
         setProfile(resProfile);
-        setRole(resRole);
+        setRole(resRole || 'citizen');
 
-        if (!resRole) {
-          return {
-            success: false,
-            error: 'Account created, but citizen role could not be verified from the database. Please sign in.'
-          };
-        }
-
-        return { success: true, needsEmailVerification: false, role: resRole };
+        return { success: true, needsEmailVerification: false, role: resRole || 'citizen' };
       }
 
       return { success: false, error: 'Account creation failed. Please try again.' };

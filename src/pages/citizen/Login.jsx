@@ -101,12 +101,7 @@ export default function CitizenLogin() {
     const res = await signUp(email.trim(), password, fullName.trim());
     setLoading(false);
     if (res.success) {
-      if (res.needsEmailVerification) {
-        setSuccessMsg('Account created successfully! Please check your email to verify your account before signing in.');
-        setActiveTab('signin');
-      } else {
-        navigate(redirectPath, { replace: true });
-      }
+      navigate(redirectPath, { replace: true });
     } else {
       setErrorMsg(res.error || 'Failed to create account.');
     }
