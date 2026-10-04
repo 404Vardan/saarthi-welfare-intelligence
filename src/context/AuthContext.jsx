@@ -550,15 +550,19 @@ export function AuthProvider({ children }) {
   // ── Sign Out — clears everything ──
   const signOut = async () => {
     try {
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: 'local' });
     } catch (err) {
       console.error('[Saarthi] Sign out error:', err.message);
     }
 
-    // Clear all Saarthi localStorage keys
+    // Clear all user session Saarthi localStorage keys except language preference
+    const savedLang = localStorage.getItem('saarthi_language');
     Object.keys(localStorage)
       .filter(k => k.startsWith('saarthi_'))
       .forEach(k => localStorage.removeItem(k));
+    if (savedLang) {
+      localStorage.setItem('saarthi_language', savedLang);
+    }
 
     setUser(null);
     setRole(null);

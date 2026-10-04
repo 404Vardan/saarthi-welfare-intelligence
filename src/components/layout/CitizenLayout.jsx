@@ -24,7 +24,8 @@ import {
   Search,
   Command,
   Menu,
-  X
+  X,
+  Globe
 } from 'lucide-react';
 
 export default function CitizenLayout() {
@@ -129,14 +130,14 @@ export default function CitizenLayout() {
         {/* Navigation Groups */}
         <nav className="sidebar-nav">
           {/* 1. HOME */}
-          <div className="sidebar-section-title">HOME</div>
+          <div className="sidebar-section-title">{t('groupHome') || 'HOME'}</div>
           <NavLink to="/citizen/dashboard" onClick={closeMobileNav} className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
             <LayoutDashboard size={16} />
             <span>{t('dashboard')}</span>
           </NavLink>
 
           {/* 2. MY WELFARE */}
-          <div className="sidebar-section-title">MY WELFARE</div>
+          <div className="sidebar-section-title">{t('groupMyWelfare') || 'MY WELFARE'}</div>
           <NavLink to="/citizen/profile" onClick={closeMobileNav} className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
             <UserCheck size={16} />
             <span>{t('welfarePassport')}</span>
@@ -155,7 +156,7 @@ export default function CitizenLayout() {
           </NavLink>
 
           {/* 3. DISCOVER */}
-          <div className="sidebar-section-title">DISCOVER</div>
+          <div className="sidebar-section-title">{t('groupDiscover') || 'DISCOVER'}</div>
           <NavLink to="/citizen/explorer" onClick={closeMobileNav} className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
             <Compass size={16} />
             <span>{t('schemesCatalogue')}</span>
@@ -170,7 +171,7 @@ export default function CitizenLayout() {
           </NavLink>
 
           {/* 4. MY JOURNEY */}
-          <div className="sidebar-section-title">MY JOURNEY</div>
+          <div className="sidebar-section-title">{t('groupMyJourney') || 'MY JOURNEY'}</div>
           <NavLink to="/citizen/action-plan" onClick={closeMobileNav} className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
             <CheckSquare size={16} />
             <span>{t('applyProcess')}</span>
@@ -185,35 +186,107 @@ export default function CitizenLayout() {
           </NavLink>
 
           {/* 5. ASSIST */}
-          <div className="sidebar-section-title">ASSIST</div>
+          <div className="sidebar-section-title">{t('groupAssist') || 'ASSIST'}</div>
           <NavLink to="/citizen/assistant" onClick={closeMobileNav} className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
             <Bot size={16} />
             <span>{t('askSaarthi')}</span>
           </NavLink>
 
           {/* 6. ACCOUNT */}
-          <div className="sidebar-section-title">ACCOUNT</div>
+          <div className="sidebar-section-title">{t('groupAccount') || 'ACCOUNT'}</div>
           <NavLink to="/citizen/settings" onClick={closeMobileNav} className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
             <Settings size={16} />
-            <span>Settings</span>
+            <span>{t('settings')}</span>
           </NavLink>
         </nav>
 
-        {/* User Card & Logout */}
-        <div className="sidebar-user">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div className="user-name">{profile?.full_name || 'Ramesh Yadav'}</div>
-              <div className="user-role">Verified Citizen Passport</div>
+        {/* Structured Account Box & Explicit Sign Out */}
+        <div className="sidebar-user" style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {/* User Profile Header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '34px',
+              height: '34px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--ink-navy)',
+              color: 'var(--brass-gold)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontWeight: 700,
+              fontSize: '0.85rem',
+              border: '1.5px solid var(--brass-gold)',
+              flexShrink: 0
+            }}>
+              {(profile?.full_name || 'Vardan Desai').charAt(0).toUpperCase()}
             </div>
-            <button
-              onClick={handleSignOut}
-              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', padding: '4px' }}
-              title={t('signOut')}
-            >
-              <LogOut size={16} />
-            </button>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div className="user-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {profile?.full_name || 'Vardan Desai'}
+              </div>
+              <div className="user-role" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#10B981' }}></span>
+                {t('verifiedCitizen')}
+              </div>
+            </div>
           </div>
+
+          {/* Sub-actions: Settings & Language */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', borderTop: '1px solid rgba(0,0,0,0.06)', paddingTop: '8px' }}>
+            <NavLink
+              to="/citizen/settings"
+              onClick={closeMobileNav}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '4px 6px',
+                borderRadius: '5px',
+                fontSize: '0.78rem',
+                color: 'var(--ink-navy)',
+                textDecoration: 'none'
+              }}
+            >
+              <Settings size={14} color="var(--slate)" />
+              <span>{t('accountSettings')}</span>
+            </NavLink>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 6px' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem', color: 'var(--ink-navy)' }}>
+                <Globe size={14} color="var(--slate)" />
+                <span>{t('language')}</span>
+              </span>
+              <LanguageSelector />
+            </div>
+          </div>
+
+          {/* High-Visibility Sign Out Button */}
+          <button
+            type="button"
+            onClick={handleSignOut}
+            id="citizen-sidebar-signout-btn"
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              padding: '7px 12px',
+              backgroundColor: 'rgba(220, 38, 38, 0.08)',
+              border: '1px solid rgba(220, 38, 38, 0.25)',
+              borderRadius: '6px',
+              color: '#DC2626',
+              fontSize: '0.82rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'background-color 0.15s'
+            }}
+            onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.15)'; }}
+            onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.08)'; }}
+            title={t('signOut')}
+          >
+            <LogOut size={15} />
+            <span>{t('signOut')}</span>
+          </button>
         </div>
       </aside>
 
@@ -231,7 +304,7 @@ export default function CitizenLayout() {
           className={({ isActive }) => `bottom-nav-item ${isActive ? 'active' : ''}`}
         >
           <LayoutDashboard size={20} />
-          <span>Home</span>
+          <span>{t('navHome')}</span>
         </NavLink>
 
         <NavLink
@@ -240,7 +313,7 @@ export default function CitizenLayout() {
           className={({ isActive }) => `bottom-nav-item ${isActive ? 'active' : ''}`}
         >
           <Sparkles size={20} />
-          <span>Entitlements</span>
+          <span>{t('navEntitlements')}</span>
         </NavLink>
 
         <NavLink
@@ -249,7 +322,7 @@ export default function CitizenLayout() {
           className={({ isActive }) => `bottom-nav-item ${isActive ? 'active' : ''}`}
         >
           <FolderLock size={20} />
-          <span>Locker</span>
+          <span>{t('navLocker')}</span>
         </NavLink>
 
         <NavLink
@@ -258,7 +331,7 @@ export default function CitizenLayout() {
           className={({ isActive }) => `bottom-nav-item ${isActive ? 'active' : ''}`}
         >
           <FileCheck2 size={20} />
-          <span>Tracker</span>
+          <span>{t('navTracker')}</span>
         </NavLink>
 
         <button
@@ -268,7 +341,7 @@ export default function CitizenLayout() {
           aria-label="Toggle Full Menu"
         >
           {mobileNavOpen ? <X size={20} /> : <Menu size={20} />}
-          <span>Menu</span>
+          <span>{t('navMenu')}</span>
         </button>
       </nav>
 

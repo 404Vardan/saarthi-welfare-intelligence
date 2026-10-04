@@ -2,20 +2,31 @@ import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSchemes } from '../../context/SchemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import EligibilityEngine from '../../engine/eligibilityEngine';
 import {
   Search, Sparkles, CheckCircle2, XCircle, AlertTriangle, Bookmark,
-  Layers, ArrowRight, ShieldCheck, FileText, Info, ChevronRight, X, SlidersHorizontal
+  Layers, ArrowRight, ShieldCheck, FileText, Info, ChevronRight, X, SlidersHorizontal, MapPin
 } from 'lucide-react';
+
+const ALL_INDIAN_STATES = [
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Goa', 'Gujarat',
+  'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka', 'Kerala', 'Madhya Pradesh',
+  'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram', 'Nagaland', 'Odisha', 'Punjab',
+  'Rajasthan', 'Sikkim', 'Tamil Nadu', 'Telangana', 'Tripura', 'Uttar Pradesh',
+  'Uttarakhand', 'West Bengal', 'Delhi', 'Jammu & Kashmir', 'Ladakh'
+];
 
 export default function CitizenExplorer() {
   const navigate = useNavigate();
   const { schemes } = useSchemes();
   const { user, profile, householdMembers, documents, applications, saveScheme, removeSavedScheme, savedSchemes } = useAuth();
+  const { t } = useLanguage();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [nlParsedIntent, setNlParsedIntent] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedState, setSelectedState] = useState('all');
   const [selectedSchemeForExplain, setSelectedSchemeForExplain] = useState(null);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
 
@@ -62,32 +73,54 @@ export default function CitizenExplorer() {
     if (lower.includes('student') || lower.includes('college') || lower.includes('studying')) intent.occupation = 'student';
     else if (lower.includes('farmer') || lower.includes('agriculture') || lower.includes('kisan') || lower.includes('cultivator')) intent.occupation = 'farmer';
     else if (lower.includes('artisan') || lower.includes('carpenter') || lower.includes('craft') || lower.includes('blacksmith') || lower.includes('potter')) intent.occupation = 'artisan';
-    else if (lower.includes('daily wage') || lower.includes('labourer') || lower.includes('worker')) intent.occupation = 'daily_wage';
+    else if (lower.includes('daily wage') || lower.includes('labourer') || lower.includes('worker') || lower.includes('laborer')) intent.occupation = 'daily_wage';
 
-    // Social category
-    if (lower.includes('sc') || lower.includes('scheduled caste')) intent.category = 'sc';
-    else if (lower.includes('st') || lower.includes('scheduled tribe')) intent.category = 'st';
-    else if (lower.includes('obc')) intent.category = 'obc';
+    // Social category with safe word boundaries (prevents "scheme" from triggering "sc")
+    if (/\b(sc|scheduled\s+caste)\b/i.test(lower)) intent.category = 'sc';
+    else if (/\b(st|scheduled\s+tribe)\b/i.test(lower)) intent.category = 'st';
+    else if (/\b(obc|other\s+backward\s+class(?:es)?)\b/i.test(lower)) intent.category = 'obc';
+    else if (/\b(ews|economically\s+weaker)\b/i.test(lower)) intent.category = 'ews';
 
     // BPL status
     if (lower.includes('bpl') || lower.includes('ration card') || lower.includes('below poverty')) intent.bpl = true;
 
-    // State extraction
-    const states = ['Gujarat', 'Maharashtra', 'Uttar Pradesh', 'Rajasthan', 'Madhya Pradesh', 'Bihar', 'Karnataka', 'Tamil Nadu', 'Punjab', 'Haryana'];
-    for (const st of states) {
-      if (lower.includes(st.toLowerCase())) {
+    // State extraction across all 31 Indian states & UTs
+    for (const st of ALL_INDIAN_STATES) {
+      const normalizedState = st.toLowerCase();
+      // Handle abbreviations like UP / MP
+      const isUp = st === 'Uttar Pradesh' && /\bup\b/i.test(lower);
+      const isMp = st === 'Madhya Pradesh' && /\bmp\b/i.test(lower);
+      const isTn = st === 'Tamil Nadu' && /\btn\b/i.test(lower);
+      const isWb = st === 'West Bengal' && /\bwb\b/i.test(lower);
+
+      if (lower.includes(normalizedState) || isUp || isMp || isTn || isWb) {
         intent.state = st;
         break;
       }
     }
 
-    setNlParsedIntent(intent);
-    return intent;
+    // Only establish intent if at least ONE structured attribute was actually extracted
+    const hasStructuredIntent = Boolean(
+      intent.age !== null ||
+      intent.occupation !== null ||
+      intent.state !== null ||
+      intent.maxIncome !== null ||
+      intent.category !== null ||
+      intent.bpl !== null
+    );
+
+    if (hasStructuredIntent) {
+      setNlParsedIntent(intent);
+      return intent;
+    } else {
+      setNlParsedIntent(null);
+      return null;
+    }
   };
 
   const handleSearchChange = (val) => {
     setSearchTerm(val);
-    if (val.length > 8) {
+    if (val.trim().length > 4) {
       parseNaturalLanguage(val);
     } else {
       setNlParsedIntent(null);
@@ -128,34 +161,56 @@ export default function CitizenExplorer() {
   // Filtered & Ranked schemes
   const filteredSchemes = useMemo(() => {
     return evaluatedSchemes.filter(scheme => {
-      // Category filter
+      // 1. Category filter
       if (selectedCategory !== 'all') {
         if (scheme.category !== selectedCategory && scheme.type !== selectedCategory) return false;
       }
 
-      // Search keyword filter if no structured NL intent
-      if (searchTerm.trim() && !nlParsedIntent) {
-        const t = searchTerm.toLowerCase();
-        const matchesText =
-          (scheme.official_name || scheme.name || '').toLowerCase().includes(t) ||
-          (scheme.short_name || scheme.scheme_code || '').toLowerCase().includes(t) ||
-          (scheme.description || '').toLowerCase().includes(t);
-        if (!matchesText) return false;
+      // 2. State filter (Show All-India + Selected State schemes; exclude unrelated states)
+      if (selectedState !== 'all') {
+        const schemeState = (scheme.state || 'All-India').toLowerCase().trim();
+        const isAllIndia = schemeState === 'all-india' || schemeState === 'all india' || schemeState === 'all' || scheme.government_level === 'central';
+        const isSpecificState = schemeState === selectedState.toLowerCase().trim();
+
+        if (!isAllIndia && !isSpecificState) {
+          return false;
+        }
+      }
+
+      // 3. Search keyword filter
+      // Separated from NL parser: Always runs when a search term is typed without structured intent,
+      // or checks textual relevance.
+      if (searchTerm.trim()) {
+        const q = searchTerm.toLowerCase().trim();
+        const matchesKeyword =
+          (scheme.official_name || scheme.name || '').toLowerCase().includes(q) ||
+          (scheme.short_name || scheme.scheme_code || '').toLowerCase().includes(q) ||
+          (scheme.description || '').toLowerCase().includes(q) ||
+          (scheme.category || '').toLowerCase().includes(q) ||
+          (scheme.ministry || '').toLowerCase().includes(q) ||
+          (scheme.department || '').toLowerCase().includes(q) ||
+          (scheme.benefits?.summary || scheme.benefit || '').toLowerCase().includes(q);
+
+        // If ordinary query (no structured NL intent attributes detected), strictly require keyword match
+        if (!nlParsedIntent && !matchesKeyword) {
+          return false;
+        }
       }
 
       return true;
     }).sort((a, b) => (b.evaluation.matchPercentage || 0) - (a.evaluation.matchPercentage || 0));
-  }, [evaluatedSchemes, selectedCategory, searchTerm, nlParsedIntent]);
+  }, [evaluatedSchemes, selectedCategory, selectedState, searchTerm, nlParsedIntent]);
 
   const categories = [
-    { id: 'all', label: 'All Catalogues' },
-    { id: 'agriculture', label: '🌾 Agriculture & Farmers' },
-    { id: 'healthcare', label: '🏥 Health & PMJAY' },
-    { id: 'education', label: '🎓 Education & Scholarships' },
-    { id: 'social_security', label: '🛡️ Social Security & Pension' },
-    { id: 'skill_training', label: '🔨 Skilling & MSME' },
-    { id: 'housing', label: '🏠 Rural Housing' },
-    { id: 'credit', label: '💳 Credit & Loans' }
+    { id: 'all', label: t('catAll') || 'All Catalogues' },
+    { id: 'agriculture', label: t('catAgriculture') || '🌾 Agriculture & Farmers' },
+    { id: 'health', label: t('catHealthcare') || '🏥 Health & PMJAY' },
+    { id: 'education', label: t('catEducation') || '🎓 Education & Scholarships' },
+    { id: 'social_security', label: t('catSocialSecurity') || '🛡️ Social Security & Pension' },
+    { id: 'skill_development', label: t('catSkillTraining') || '🔨 Skilling & MSME' },
+    { id: 'housing', label: t('catHousing') || '🏠 Housing & Sanitation' },
+    { id: 'credit', label: t('catCredit') || '💳 Credit & Financial Inclusion' },
+    { id: 'women_child', label: t('catWomenChild') || '👩 Women & Child Welfare' }
   ];
 
   const appliedSchemeIds = new Set((applications || []).map(a => a.schemeId));
@@ -178,9 +233,9 @@ export default function CitizenExplorer() {
             <Sparkles size={13} />
             SAARTHI INTELLIGENT DISCOVERY ENGINE
           </div>
-          <h1 className="page-title" style={{ fontSize: '1.85rem' }}>Explore Welfare Catalogues</h1>
+          <h1 className="page-title" style={{ fontSize: '1.85rem' }}>{t('exploreCatalogues') || 'Explore Welfare Catalogues'}</h1>
           <p className="page-description" style={{ fontSize: '0.9rem' }}>
-            Discover official Central & State schemes through natural language intent, with deterministic eligibility breakdowns for every result.
+            {t('exploreDesc') || 'Discover official Central & State schemes through natural language intent, with deterministic eligibility breakdowns for every result.'}
           </p>
         </div>
       </header>
@@ -190,7 +245,7 @@ export default function CitizenExplorer() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
           <Sparkles size={16} color="var(--brass-gold)" />
           <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--ink-navy)', letterSpacing: '0.02em' }}>
-            NATURAL LANGUAGE INTENT SEARCH
+            {t('naturalLanguageSearch') || 'NATURAL LANGUAGE INTENT SEARCH'}
           </span>
         </div>
 
@@ -199,7 +254,7 @@ export default function CitizenExplorer() {
           <input
             type="text"
             className="form-input"
-            placeholder="Try: 'I am a 21-year-old student from Gujarat whose family income is ₹2.5 lakh'..."
+            placeholder={t('searchPlaceholder') || "Search by scheme name, ministry, keyword, or type your situation..."}
             value={searchTerm}
             onChange={e => handleSearchChange(e.target.value)}
             style={{
@@ -239,7 +294,7 @@ export default function CitizenExplorer() {
 
         {/* 1-Click Persona Prompts */}
         <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--slate)', fontWeight: 600 }}>Quick Personas:</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--slate)', fontWeight: 600 }}>{t('samplePromptsTitle') || 'Quick Personas'}:</span>
           {samplePrompts.map((p, i) => (
             <button
               key={i}
@@ -260,6 +315,66 @@ export default function CitizenExplorer() {
               {p.label}
             </button>
           ))}
+        </div>
+      </div>
+
+      {/* State & Multi-Filter Controls Bar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            background: 'var(--paper)',
+            border: selectedState !== 'all' ? '1.5px solid var(--brass-gold)' : '1px solid var(--border)',
+            borderRadius: '8px',
+            padding: '7px 12px',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+          }}>
+            <MapPin size={15} color={selectedState !== 'all' ? 'var(--seal-vermillion)' : 'var(--brass-gold)'} />
+            <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--ink-navy)' }}>
+              {t('filterByState') || 'State'}:
+            </span>
+            <select
+              value={selectedState}
+              onChange={(e) => setSelectedState(e.target.value)}
+              aria-label="Filter by State"
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--ink-navy)',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+            >
+              <option value="all">{t('allStates') || 'All States (All-India + State Schemes)'}</option>
+              {ALL_INDIAN_STATES.map(st => (
+                <option key={st} value={st}>{st}</option>
+              ))}
+            </select>
+          </div>
+
+          {(selectedState !== 'all' || selectedCategory !== 'all' || searchTerm.trim()) && (
+            <button
+              onClick={() => {
+                setSelectedState('all');
+                setSelectedCategory('all');
+                setSearchTerm('');
+                setNlParsedIntent(null);
+              }}
+              className="btn btn-secondary btn-sm"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.78rem', padding: '6px 12px' }}
+            >
+              <X size={13} /> {t('clearFilters') || 'Clear Filters'}
+            </button>
+          )}
+        </div>
+
+        <div style={{ fontSize: '0.82rem', color: 'var(--slate)', fontWeight: 600 }}>
+          <span style={{ color: 'var(--ink-navy)', fontWeight: 700, fontSize: '0.95rem' }}>{filteredSchemes.length}</span> {t('schemesFound') || 'Schemes Available'}
+          {selectedState !== 'all' && <span style={{ marginLeft: '6px', color: 'var(--seal-vermillion)', fontWeight: 700 }}>({selectedState})</span>}
         </div>
       </div>
 
