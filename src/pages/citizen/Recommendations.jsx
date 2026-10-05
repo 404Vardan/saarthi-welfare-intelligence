@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { CheckCircle, XCircle, AlertTriangle, ChevronDown, ChevronUp, Send, Check, ExternalLink, FileText } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, ChevronDown, ChevronUp, Send, Check, ExternalLink, FileText, Layers, ShieldCheck } from 'lucide-react';
 import FeedbackWidget from '../../components/common/FeedbackWidget';
+import { analyzeMissingSchemeAttributes } from '../../utils/welfarePassportUtils';
 
 const OFFICIAL_PORTAL_REGISTRY = {
   'pm-kisan': {
@@ -80,9 +81,42 @@ export default function CitizenRecommendations() {
     setAppliedSuccess(newApp);
   };
 
-  const eligible = evaluations.filter(e => e.status === 'eligible');
-  const nearly = evaluations.filter(e => e.status === 'nearly_eligible');
-  const missingData = evaluations.filter(e => e.status === 'insufficient_data');
+  const existingBenefits = useMemo(() => {
+    return Array.isArray(profile?.existing_benefits) ? profile.existing_benefits : [];
+  }, [profile?.existing_benefits]);
+
+  // Schemes the citizen is already enrolled in / receiving
+  const activeReceived = useMemo(() => {
+    return evaluations.filter(e => 
+      e.alreadyReceiving || 
+      existingBenefits.some(b => 
+        b === e.schemeId || 
+        b === e.schemeCode || 
+        b === e.schemeShortName ||
+        (typeof b === 'string' && (
+          String(b).toLowerCase() === String(e.schemeId || '').toLowerCase() ||
+          String(b).toLowerCase() === String(e.schemeCode || '').toLowerCase()
+        ))
+      )
+    );
+  }, [evaluations, existingBenefits]);
+
+  // Eligible unclaimed schemes (actionable for new applications)
+  const eligible = useMemo(() => {
+    return evaluations.filter(e => e.status === 'eligible' && !activeReceived.some(a => a.schemeId === e.schemeId));
+  }, [evaluations, activeReceived]);
+
+  const nearly = useMemo(() => {
+    return evaluations.filter(e => e.status === 'nearly_eligible');
+  }, [evaluations]);
+
+  const missingData = useMemo(() => {
+    return evaluations.filter(e => e.status === 'insufficient_data');
+  }, [evaluations]);
+
+  const prioritizedMissing = useMemo(() => {
+    return analyzeMissingSchemeAttributes(evaluations, profile);
+  }, [evaluations, profile]);
 
   const appliedSchemeIds = new Set(applications.map(a => a.schemeId));
 
@@ -115,6 +149,24 @@ export default function CitizenRecommendations() {
         >
           ✓ Eligible Entitlements ({eligible.length})
         </button>
+        {activeReceived.length > 0 && (
+          <button
+            onClick={() => setActiveTab('active_received')}
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              background: activeTab === 'active_received' ? '#FFFDF9' : 'transparent',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              color: activeTab === 'active_received' ? 'var(--ledger-green)' : 'var(--slate)',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              boxShadow: activeTab === 'active_received' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
+            }}
+          >
+            🛡️ Active Benefits ({activeReceived.length})
+          </button>
+        )}
         <button
           onClick={() => setActiveTab('nearly')}
           style={{
@@ -358,6 +410,71 @@ export default function CitizenRecommendations() {
         </div>
       )}
 
+      {/* Active Enrolled Benefits Tab */}
+      {activeTab === 'active_received' && (
+        <div className="eligibility-section">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ margin: 0, color: 'var(--ink-navy)' }}>Active Government Benefits ({activeReceived.length})</h3>
+            <span className="badge badge-eligible">Enrolled & Receiving</span>
+          </div>
+
+          <div style={{ padding: '12px 16px', background: 'rgba(31, 122, 77, 0.08)', borderLeft: '4px solid var(--ledger-green)', borderRadius: '4px', marginBottom: '1.25rem', fontSize: '0.85rem', color: 'var(--ink-navy)' }}>
+            ✓ <strong>Active Entitlements:</strong> You indicated in your Welfare Passport that you already receive these benefits. Saarthi monitors them here and excludes them from unclaimed recommendations to prevent duplicate applications.
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
+            {activeReceived.map(item => (
+              <div key={item.schemeId} className="card eligibility-card" style={{ borderLeftColor: 'var(--ledger-green)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <span className="badge badge-eligible" style={{ fontSize: '11px', textTransform: 'uppercase' }}>
+                        Active Benefit
+                      </span>
+                      <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--slate)' }}>
+                        {item.schemeCode}
+                      </span>
+                    </div>
+
+                    <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.3rem', margin: '4px 0 8px 0', color: 'var(--ink-navy)' }}>
+                      {item.schemeName}
+                    </h2>
+
+                    <div style={{ color: 'var(--ledger-green)', fontWeight: 700, fontFamily: 'var(--font-mono)', fontSize: '1.1rem' }}>
+                      {item.benefit}
+                    </div>
+
+                    <div style={{ fontSize: '0.8rem', color: 'var(--slate)', marginTop: '4px' }}>
+                      Ministry: {item.ministry}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+                    <button 
+                      onClick={() => navigate(`/citizen/scheme/${item.schemeId}`)} 
+                      className="btn btn-secondary btn-sm"
+                    >
+                      Official Dossier →
+                    </button>
+                    {item.officialSource && (
+                      <a 
+                        href={typeof item.officialSource === 'object' ? item.officialSource?.official_url : item.officialSource} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="btn btn-outline btn-sm"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        <ExternalLink size={13} /> Official Portal
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 3. Missing Profile Info Tab */}
       {activeTab === 'missing_data' && (
         <div className="eligibility-section">
@@ -365,6 +482,32 @@ export default function CitizenRecommendations() {
             <h3 style={{ margin: 0, color: 'var(--ink-navy)' }}>Programmes Requiring More Information ({missingData.length})</h3>
             <span className="badge" style={{ background: 'rgba(100,116,139,0.15)', color: 'var(--slate)' }}>Incomplete Attributes</span>
           </div>
+
+          {prioritizedMissing.length > 0 && (
+            <div className="card" style={{ background: 'rgba(166, 135, 61, 0.08)', borderColor: 'rgba(166, 135, 61, 0.25)', marginBottom: '1.5rem', padding: '14px 18px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                <AlertTriangle size={18} color="var(--brass-gold)" />
+                <h4 style={{ margin: 0, color: 'var(--ink-navy)', fontSize: '0.95rem' }}>
+                  High-Yield Missing Profile Parameters
+                </h4>
+              </div>
+              <p style={{ margin: '0 0 10px 0', fontSize: '0.83rem', color: 'var(--slate)' }}>
+                Updating these parameters once in your Welfare Passport will simultaneously unlock multiple schemes below:
+              </p>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {prioritizedMissing.slice(0, 4).map((pm, i) => (
+                  <button
+                    key={i}
+                    onClick={() => navigate('/citizen/profile')}
+                    className="btn btn-secondary btn-sm"
+                    style={{ fontSize: '0.78rem' }}
+                  >
+                    Provide {pm.ruleLabel} (Unlocks {pm.schemesCount} schemes) →
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div style={{ padding: '12px 16px', background: 'rgba(100,116,139,0.08)', borderLeft: '4px solid var(--slate)', borderRadius: '4px', marginBottom: '1.25rem', fontSize: '0.85rem', color: 'var(--ink-navy)' }}>
             ℹ️ <strong>Missing Demographic Data:</strong> Complete your Welfare Passport profile to enable deterministic evaluation for these statutory schemes.

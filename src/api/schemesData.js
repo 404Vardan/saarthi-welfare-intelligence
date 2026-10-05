@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient.js';
 import { extendedSchemes } from './extendedSchemes.js';
+import { campusPilotSchemes } from './campusPilotSchemes.js';
 
 /**
  * Saarthi 17-Dimension Canonical Scheme Data Registry
@@ -74,6 +75,10 @@ function createScheme(data) {
       verified_by: 'Saarthi Gazette Policy Parser v3.2',
       sha256: `sha256:gazette_${data.scheme_code.toLowerCase().replace(/[^a-z0-9]/g, '')}_authenticated`
     },
+    official_url: data.official_url || data.url || (data.official_source && data.official_source.official_url) || 'https://india.gov.in',
+    campus_audience: data.campus_audience || [],
+    context_tags: data.context_tags || data.tags || [],
+    tags: data.tags || data.context_tags || [],
     rule_completeness: data.rule_completeness || 'VERIFIED',
     rule_version: data.rule_version || 'v1.0',
     version: data.rule_version || 'v1.0',
@@ -1484,11 +1489,11 @@ const baseSeedSchemes = [
   })
 ];
 
-// Merge base schemes and extended schemes with strict zero-duplication
+// Merge base schemes, extended schemes, and campus pilot schemes with strict zero-duplication
 const seenSchemeIdentifiers = new Set();
 const mergedCanonicalSchemes = [];
 
-for (const s of [...baseSeedSchemes, ...extendedSchemes.map(s => createScheme(s))]) {
+for (const s of [...baseSeedSchemes, ...extendedSchemes.map(s => createScheme(s)), ...campusPilotSchemes.map(s => createScheme(s))]) {
   const normId = (s.id || '').toLowerCase().trim();
   const normCode = (s.scheme_code || '').toLowerCase().trim();
   const normName = (s.official_name || s.name || '').toLowerCase().trim();

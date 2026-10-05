@@ -500,21 +500,33 @@ export const EligibilityEngine = {
     };
   },
 
+  normalizeCitizenAttribute(val) {
+    if (val === undefined || val === null || val === '') return undefined;
+    if (val === 'not_sure' || val === 'prefer_not_to_say' || val === 'unknown') return undefined;
+    if (val === 'yes') return true;
+    if (val === 'no') return false;
+    return val;
+  },
+
   /**
    * Builds canonical context object for AST evaluation
    */
   buildContext(citizen = {}, householdMembers = [], citizenDocuments = []) {
     const aggregateIncome = this.computeHouseholdIncome(citizen, householdMembers);
+    const normalizedCitizen = {};
+    for (const [k, v] of Object.entries(citizen || {})) {
+      normalizedCitizen[k] = this.normalizeCitizenAttribute(v);
+    }
+
+    normalizedCitizen.income_annual = (citizen?.income_annual !== undefined && citizen?.income_annual !== null && citizen?.income_annual !== '')
+      ? Number(citizen.income_annual)
+      : undefined;
+    normalizedCitizen.age = (citizen?.age !== undefined && citizen?.age !== null && citizen?.age !== '')
+      ? Number(citizen.age)
+      : undefined;
+
     return {
-      citizen: {
-        ...citizen,
-        income_annual: (citizen?.income_annual !== undefined && citizen?.income_annual !== null && citizen?.income_annual !== '')
-          ? Number(citizen.income_annual)
-          : undefined,
-        age: (citizen?.age !== undefined && citizen?.age !== null && citizen?.age !== '')
-          ? Number(citizen.age)
-          : undefined
-      },
+      citizen: normalizedCitizen,
       household: {
         income_annual: aggregateIncome,
         aggregate_income: aggregateIncome,
@@ -686,6 +698,18 @@ export const EligibilityEngine = {
     const ruleVersion = scheme.rule_version || scheme.ruleVersion || '1.0.0';
     const decisionId = this.generateDeterministicDecisionId(scheme, citizen, householdMembers, ruleVersion);
 
+    const existingBenefits = Array.isArray(citizen.existing_benefits) ? citizen.existing_benefits : [];
+    const alreadyReceiving = existingBenefits.some(b => 
+      b === scheme.id || 
+      b === scheme.scheme_code || 
+      b === scheme.short_name ||
+      (typeof b === 'string' && (
+        String(b).toLowerCase() === String(scheme.id || '').toLowerCase() ||
+        String(b).toLowerCase() === String(scheme.scheme_code || '').toLowerCase() ||
+        String(b).toLowerCase() === String(scheme.short_name || '').toLowerCase()
+      ))
+    );
+
     return {
       decisionId,
       decision_reference_id: decisionId,
@@ -700,6 +724,8 @@ export const EligibilityEngine = {
       ministry: scheme.ministry,
       department: scheme.department,
       status,
+      alreadyReceiving,
+      isAlreadyReceiving: alreadyReceiving,
       ruleCompleteness,
       rule_completeness: ruleCompleteness,
       matchPercentage,

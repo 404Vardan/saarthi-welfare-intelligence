@@ -113,7 +113,7 @@ export default function CitizenSchemeDetail() {
               </button>
 
               <Link
-                to="/citizen/compare"
+                to={`/citizen/compare?scheme=${evaluation?.schemeId || id}`}
                 className="btn btn-secondary btn-sm"
                 style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
               >

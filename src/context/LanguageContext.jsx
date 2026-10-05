@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { passportTranslations } from './passportTranslations';
 
 const LanguageContext = createContext(null);
 
@@ -66,6 +67,7 @@ export const translations = {
     catHousing: '🏠 Housing & Sanitation',
     catCredit: '💳 Credit & Financial Inclusion',
     catWomenChild: '👩 Women & Child Welfare',
+    catCampusPilot: '🎓 Campus Welfare Pilot',
 
     // Statuses
     eligible: 'Eligible',
@@ -850,11 +852,15 @@ export function LanguageProvider({ children }) {
   }, [currentLang]);
 
   const t = (key) => {
-    return translations[currentLang]?.[key] || translations['en']?.[key] || key;
+    return translations[currentLang]?.[key] || 
+           passportTranslations[currentLang]?.[key] || 
+           translations['en']?.[key] || 
+           passportTranslations['en']?.[key] || 
+           key;
   };
 
   const changeLanguage = (code) => {
-    if (translations[code]) {
+    if (translations[code] || passportTranslations[code]) {
       setCurrentLang(code);
     }
   };
@@ -872,7 +878,7 @@ export function useLanguage() {
     return {
       currentLang: 'en',
       setLanguage: () => {},
-      t: (key) => translations.en[key] || key,
+      t: (key) => translations.en[key] || passportTranslations.en[key] || key,
       supportedLanguages
     };
   }

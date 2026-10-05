@@ -26,6 +26,7 @@ export default function CitizenExplorer() {
   const [searchTerm, setSearchTerm] = useState('');
   const [nlParsedIntent, setNlParsedIntent] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedAudience, setSelectedAudience] = useState('all');
   const [selectedState, setSelectedState] = useState('all');
   const [selectedSchemeForExplain, setSelectedSchemeForExplain] = useState(null);
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
@@ -33,9 +34,10 @@ export default function CitizenExplorer() {
   // Natural Language Sample Queries for 1-click test
   const samplePrompts = [
     { label: '🎓 21yo Student, Gujarat, ₹2.5L Income', query: "I'm a 21-year-old SC student from Gujarat whose family income is ₹2.5 lakh." },
+    { label: '🏛️ Campus Security Guard, Telangana', query: "I am a 32-year-old unorganized contract security guard in Telangana earning ₹18,000 monthly." },
+    { label: '🔬 Postdoc / PhD Scholar', query: "I am a PhD research scholar looking for national fellowship and research grants." },
     { label: '🌾 Small Farmer with 2 Acres', query: "I am a rural farmer in UP owning 2 acres of land looking for direct cash and credit." },
-    { label: '👵 65yo Senior Citizen, BPL', query: "I am a 65-year-old senior citizen with BPL card looking for monthly pension." },
-    { label: '🔨 Traditional Artisan / Carpenter', query: "I am a 28-year-old wood artisan seeking skill toolkit and low interest loan." }
+    { label: '👵 65yo Senior Citizen, BPL', query: "I am a 65-year-old senior citizen with BPL card looking for monthly pension." }
   ];
 
   // Natural language intent parser
@@ -73,7 +75,8 @@ export default function CitizenExplorer() {
     if (lower.includes('student') || lower.includes('college') || lower.includes('studying')) intent.occupation = 'student';
     else if (lower.includes('farmer') || lower.includes('agriculture') || lower.includes('kisan') || lower.includes('cultivator')) intent.occupation = 'farmer';
     else if (lower.includes('artisan') || lower.includes('carpenter') || lower.includes('craft') || lower.includes('blacksmith') || lower.includes('potter')) intent.occupation = 'artisan';
-    else if (lower.includes('daily wage') || lower.includes('labourer') || lower.includes('worker') || lower.includes('laborer')) intent.occupation = 'daily_wage';
+    else if (lower.includes('daily wage') || lower.includes('labourer') || lower.includes('worker') || lower.includes('laborer') || lower.includes('security') || lower.includes('guard') || lower.includes('housekeeping') || lower.includes('canteen') || lower.includes('driver')) intent.occupation = 'daily_wage';
+    else if (lower.includes('researcher') || lower.includes('scholar') || lower.includes('phd') || lower.includes('postdoc') || lower.includes('faculty') || lower.includes('professor')) intent.occupation = 'researcher';
 
     // Social category with safe word boundaries (prevents "scheme" from triggering "sc")
     if (/\b(sc|scheduled\s+caste)\b/i.test(lower)) intent.category = 'sc';
@@ -84,18 +87,22 @@ export default function CitizenExplorer() {
     // BPL status
     if (lower.includes('bpl') || lower.includes('ration card') || lower.includes('below poverty')) intent.bpl = true;
 
-    // State extraction across all 31 Indian states & UTs
-    for (const st of ALL_INDIAN_STATES) {
-      const normalizedState = st.toLowerCase();
-      // Handle abbreviations like UP / MP
-      const isUp = st === 'Uttar Pradesh' && /\bup\b/i.test(lower);
-      const isMp = st === 'Madhya Pradesh' && /\bmp\b/i.test(lower);
-      const isTn = st === 'Tamil Nadu' && /\btn\b/i.test(lower);
-      const isWb = st === 'West Bengal' && /\bwb\b/i.test(lower);
+    // State extraction across all 31 Indian states & UTs + Hyderabad alias
+    if (lower.includes('hyderabad')) {
+      intent.state = 'Telangana';
+    } else {
+      for (const st of ALL_INDIAN_STATES) {
+        const normalizedState = st.toLowerCase();
+        // Handle abbreviations like UP / MP
+        const isUp = st === 'Uttar Pradesh' && /\bup\b/i.test(lower);
+        const isMp = st === 'Madhya Pradesh' && /\bmp\b/i.test(lower);
+        const isTn = st === 'Tamil Nadu' && /\btn\b/i.test(lower);
+        const isWb = st === 'West Bengal' && /\bwb\b/i.test(lower);
 
-      if (lower.includes(normalizedState) || isUp || isMp || isTn || isWb) {
-        intent.state = st;
-        break;
+        if (lower.includes(normalizedState) || isUp || isMp || isTn || isWb) {
+          intent.state = st;
+          break;
+        }
       }
     }
 
@@ -163,7 +170,51 @@ export default function CitizenExplorer() {
     return evaluatedSchemes.filter(scheme => {
       // 1. Category filter
       if (selectedCategory !== 'all') {
-        if (scheme.category !== selectedCategory && scheme.type !== selectedCategory) return false;
+        if (selectedCategory === 'campus_pilot') {
+          const isCampusScheme =
+            scheme.category === 'campus_pilot' ||
+            (scheme.campus_audience && scheme.campus_audience.length > 0) ||
+            ['education', 'scholarships', 'skill_development', 'labour_workers'].includes(scheme.category) ||
+            (scheme.context_tags && scheme.context_tags.some(tg => ['campus', 'student', 'fellowship', 'research', 'labour_welfare', 'worker_welfare', 'contract_worker'].includes(tg)));
+          if (!isCampusScheme) return false;
+        } else if (scheme.category !== selectedCategory && scheme.type !== selectedCategory) {
+          return false;
+        }
+      }
+
+      // 1b. Campus Audience / Role filter ("Who are you?")
+      if (selectedAudience !== 'all') {
+        const aud = selectedAudience;
+        const schemeAudiences = scheme.campus_audience || [];
+        const schemeTags = scheme.context_tags || scheme.tags || [];
+
+        let matchesAudience = schemeAudiences.includes(aud);
+
+        if (!matchesAudience) {
+          if (aud === 'student') {
+            matchesAudience = schemeAudiences.includes('student') ||
+              (scheme.beneficiary_types || []).includes('student') ||
+              ['education', 'scholarships'].includes(scheme.category) ||
+              schemeTags.includes('student') || schemeTags.includes('scholarship');
+          } else if (aud === 'contract_worker') {
+            matchesAudience = schemeAudiences.some(a => ['contract_worker', 'security_worker', 'housekeeping_worker', 'canteen_worker', 'driver', 'maintenance_worker', 'service_worker'].includes(a)) ||
+              scheme.category === 'labour_workers' ||
+              schemeTags.some(t => ['labour_welfare', 'worker_welfare', 'unorganized_worker', 'social_security'].includes(t));
+          } else if (aud === 'faculty') {
+            matchesAudience = schemeAudiences.some(a => ['faculty', 'researcher'].includes(a)) ||
+              schemeTags.some(t => ['fellowship', 'research', 'higher_education'].includes(t));
+          } else if (aud === 'non_teaching_staff') {
+            matchesAudience = schemeAudiences.some(a => ['non_teaching_staff', 'administrative_staff'].includes(a));
+          } else if (aud === 'job_seeker') {
+            matchesAudience = schemeAudiences.some(a => ['job_seeker', 'apprentice'].includes(a)) ||
+              scheme.category === 'skill_development' || schemeTags.includes('employment');
+          } else if (aud === 'entrepreneur') {
+            matchesAudience = schemeAudiences.includes('entrepreneur') ||
+              scheme.category === 'entrepreneurship' || schemeTags.includes('startup');
+          }
+        }
+
+        if (!matchesAudience) return false;
       }
 
       // 2. State filter (Show All-India + Selected State schemes; exclude unrelated states)
@@ -178,8 +229,6 @@ export default function CitizenExplorer() {
       }
 
       // 3. Search keyword filter
-      // Separated from NL parser: Always runs when a search term is typed without structured intent,
-      // or checks textual relevance.
       if (searchTerm.trim()) {
         const q = searchTerm.toLowerCase().trim();
         const matchesKeyword =
@@ -189,7 +238,9 @@ export default function CitizenExplorer() {
           (scheme.category || '').toLowerCase().includes(q) ||
           (scheme.ministry || '').toLowerCase().includes(q) ||
           (scheme.department || '').toLowerCase().includes(q) ||
-          (scheme.benefits?.summary || scheme.benefit || '').toLowerCase().includes(q);
+          (scheme.benefits?.summary || scheme.benefit || '').toLowerCase().includes(q) ||
+          (scheme.campus_audience || []).some(aud => aud.toLowerCase().includes(q)) ||
+          (scheme.context_tags || []).some(tag => tag.toLowerCase().includes(q));
 
         // If ordinary query (no structured NL intent attributes detected), strictly require keyword match
         if (!nlParsedIntent && !matchesKeyword) {
@@ -199,10 +250,11 @@ export default function CitizenExplorer() {
 
       return true;
     }).sort((a, b) => (b.evaluation.matchPercentage || 0) - (a.evaluation.matchPercentage || 0));
-  }, [evaluatedSchemes, selectedCategory, selectedState, searchTerm, nlParsedIntent]);
+  }, [evaluatedSchemes, selectedCategory, selectedAudience, selectedState, searchTerm, nlParsedIntent]);
 
   const categories = [
     { id: 'all', label: t('catAll') || 'All Catalogues' },
+    { id: 'campus_pilot', label: t('catCampusPilot') || '🎓 Campus Welfare Pilot' },
     { id: 'agriculture', label: t('catAgriculture') || '🌾 Agriculture & Farmers' },
     { id: 'health', label: t('catHealthcare') || '🏥 Health & PMJAY' },
     { id: 'education', label: t('catEducation') || '🎓 Education & Scholarships' },
@@ -211,6 +263,16 @@ export default function CitizenExplorer() {
     { id: 'housing', label: t('catHousing') || '🏠 Housing & Sanitation' },
     { id: 'credit', label: t('catCredit') || '💳 Credit & Financial Inclusion' },
     { id: 'women_child', label: t('catWomenChild') || '👩 Women & Child Welfare' }
+  ];
+
+  const campusAudiences = [
+    { id: 'all', label: t('audienceAll') || 'All Roles' },
+    { id: 'student', label: t('audienceStudent') || 'Student' },
+    { id: 'faculty', label: t('audienceFaculty') || 'Faculty & Researchers' },
+    { id: 'non_teaching_staff', label: t('audienceStaff') || 'Non-Teaching Staff' },
+    { id: 'contract_worker', label: t('audienceWorker') || 'Contract & Service Workers' },
+    { id: 'job_seeker', label: t('audienceJobSeeker') || 'Job Seekers & Graduates' },
+    { id: 'entrepreneur', label: t('audienceEntrepreneur') || 'Campus Entrepreneurs' }
   ];
 
   const appliedSchemeIds = new Set((applications || []).map(a => a.schemeId));
@@ -356,11 +418,12 @@ export default function CitizenExplorer() {
             </select>
           </div>
 
-          {(selectedState !== 'all' || selectedCategory !== 'all' || searchTerm.trim()) && (
+          {(selectedState !== 'all' || selectedCategory !== 'all' || selectedAudience !== 'all' || searchTerm.trim()) && (
             <button
               onClick={() => {
                 setSelectedState('all');
                 setSelectedCategory('all');
+                setSelectedAudience('all');
                 setSearchTerm('');
                 setNlParsedIntent(null);
               }}
@@ -379,11 +442,13 @@ export default function CitizenExplorer() {
       </div>
 
       {/* Categories Bar */}
-      <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '0.75rem' }}>
         {categories.map(c => (
           <button
             key={c.id}
-            onClick={() => setSelectedCategory(c.id)}
+            onClick={() => {
+              setSelectedCategory(c.id);
+            }}
             style={{
               padding: '7px 16px',
               borderRadius: '24px',
@@ -402,6 +467,51 @@ export default function CitizenExplorer() {
             {c.label}
           </button>
         ))}
+      </div>
+
+      {/* Campus Audience Sub-filter */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        overflowX: 'auto',
+        padding: '8px 12px',
+        marginBottom: '1.5rem',
+        background: selectedCategory === 'campus_pilot' || selectedAudience !== 'all' ? 'rgba(197, 160, 89, 0.1)' : 'rgba(27, 42, 74, 0.03)',
+        borderRadius: '8px',
+        border: selectedCategory === 'campus_pilot' || selectedAudience !== 'all' ? '1px solid rgba(197, 160, 89, 0.35)' : '1px solid rgba(27, 42, 74, 0.08)'
+      }}>
+        <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink-navy)', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '5px' }}>
+          🎓 {t('whoAreYou') || 'Who are you?'}:
+        </span>
+        {campusAudiences.map(aud => (
+          <button
+            key={aud.id}
+            onClick={() => setSelectedAudience(aud.id)}
+            style={{
+              padding: '4px 12px',
+              borderRadius: '16px',
+              border: selectedAudience === aud.id ? '1px solid var(--ink-navy)' : '1px solid rgba(0,0,0,0.12)',
+              background: selectedAudience === aud.id ? 'var(--ink-navy)' : '#FFFFFF',
+              color: selectedAudience === aud.id ? '#FFFFFF' : 'var(--ink-navy)',
+              fontSize: '0.75rem',
+              fontWeight: selectedAudience === aud.id ? 700 : 500,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.15s ease'
+            }}
+          >
+            {aud.label}
+          </button>
+        ))}
+        {selectedAudience !== 'all' && (
+          <button
+            onClick={() => setSelectedAudience('all')}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--seal-vermillion)', fontSize: '0.75rem', fontWeight: 600, padding: '2px 6px', whiteSpace: 'nowrap' }}
+          >
+            ✕ Reset Role
+          </button>
+        )}
       </div>
 
       {/* Schemes Results Grid */}
@@ -436,6 +546,11 @@ export default function CitizenExplorer() {
                     <span style={{ fontSize: '11px', color: 'var(--slate)', textTransform: 'uppercase', fontWeight: 600 }}>
                       {scheme.government_level || scheme.gov_level || 'Central'}
                     </span>
+                    {scheme.campus_audience && scheme.campus_audience.length > 0 && (
+                      <span style={{ fontSize: '10px', color: '#1B4D3E', background: '#E8F5E9', padding: '1px 6px', borderRadius: '4px', fontWeight: 600 }}>
+                        🎓 {scheme.campus_audience.map(a => a.replace(/_/g, ' ')).slice(0, 2).join(', ')}
+                      </span>
+                    )}
                   </div>
 
                   <button
@@ -538,7 +653,7 @@ export default function CitizenExplorer() {
               {/* Action Stream Footer: Compare -> Save -> Prepare Docs -> Apply */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid var(--border)', gap: '8px' }}>
                 <Link
-                  to="/citizen/compare"
+                  to={`/citizen/compare?scheme=${scheme.id}`}
                   style={{ color: 'var(--slate)', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px', textDecoration: 'none', fontWeight: 600 }}
                 >
                   <Layers size={14} /> Compare
