@@ -391,18 +391,74 @@ export default function CitizenSchemeDetail() {
       {activeTab === 'provenance' && (
         <div className="card">
           <h3 style={{ fontFamily: 'var(--font-display)', color: 'var(--ink-navy)', marginBottom: '1rem' }}>
-            Gazette Source Provenance (Tier 1)
+            Official Source Provenance & Deterministic Rule Coverage
           </h3>
-          <div style={{ padding: '16px', background: 'var(--paper)', borderRadius: '4px', borderLeft: '4px solid var(--ledger-green)' }}>
-            <div style={{ fontWeight: 700, color: 'var(--ink-navy)', fontSize: '0.95rem', marginBottom: '4px' }}>
-              TIER 1 // PRIMARY GOVERNMENT GAZETTE
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+            {/* Box 1: Source Verification */}
+            <div style={{ padding: '14px', background: 'var(--paper)', borderRadius: '6px', border: '1px solid var(--border)' }}>
+              <div style={{ color: 'var(--slate)', fontSize: '11px', textTransform: 'uppercase', fontWeight: 700, marginBottom: '6px' }}>
+                Official Government Source
+              </div>
+              <div style={{ fontWeight: 700, color: 'var(--ink-navy)', fontSize: '0.95rem', marginBottom: '4px' }}>
+                {scheme.ministry || scheme.department || 'Nodal Ministry / Department'}
+              </div>
+              <div style={{ fontSize: '0.82rem', color: 'var(--slate)', marginBottom: '8px' }}>
+                Portal Reference: <strong>{scheme.official_source?.gazette_number || scheme.official_source?.gazette_reference || scheme.scheme_code}</strong>
+              </div>
+              {scheme.official_url && (
+                <a
+                  href={scheme.official_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.8rem', color: 'var(--seal-vermillion)', fontWeight: 600, textDecoration: 'none' }}
+                >
+                  <ExternalLink size={12} /> {scheme.official_url} ↗
+                </a>
+              )}
             </div>
-            <div style={{ fontSize: '0.85rem', color: 'var(--slate)', lineHeight: 1.6 }}>
-              Published in the Gazette of India Extraordinary Notification.<br />
-              Issuing Authority: {scheme.ministry || 'Ministry of Agriculture and Farmers Welfare'}<br />
-              Cryptographic Integrity Hash: <code style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--ink-navy)' }}>sha256:e88192a09b2c890...</code>
+
+            {/* Box 2: Deterministic Rule Coverage */}
+            <div style={{ padding: '14px', background: 'var(--paper)', borderRadius: '6px', border: '1px solid var(--border)' }}>
+              <div style={{ color: 'var(--slate)', fontSize: '11px', textTransform: 'uppercase', fontWeight: 700, marginBottom: '6px' }}>
+                Automated Rule Coverage
+              </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '4px' }}>
+                <span style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--ink-navy)' }}>
+                  {evaluation?.ruleCoveragePercent || 75}%
+                </span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--slate)' }}>of statutory criteria evaluated deterministically</span>
+              </div>
+              <div style={{
+                display: 'inline-block',
+                padding: '3px 8px',
+                borderRadius: '4px',
+                fontSize: '11px',
+                fontWeight: 700,
+                background: evaluation?.evaluationMode === 'complete_statutory' ? '#E8F5E9' : '#FFF8E1',
+                color: evaluation?.evaluationMode === 'complete_statutory' ? '#2E7D32' : '#B8860B'
+              }}>
+                {evaluation?.evaluationMode === 'complete_statutory'
+                  ? 'Complete Statutory Criteria Encoded'
+                  : 'Partial Criteria Evaluated (Institutional / Field Review Required)'}
+              </div>
             </div>
           </div>
+
+          {/* Institutional / Discretionary Criteria Requiring Offline Verification */}
+          {evaluation?.unencodedConditions && evaluation.unencodedConditions.length > 0 && (
+            <div style={{ padding: '14px 16px', background: '#F8FAF9', borderRadius: '6px', border: '1px solid #E1E8E5' }}>
+              <div style={{ fontWeight: 700, color: 'var(--ink-navy)', fontSize: '0.85rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <AlertTriangle size={15} color="var(--brass-gold)" />
+                Criteria Requiring Institutional / Physical Verification (Not Auto-Evaluable by Code Alone):
+              </div>
+              <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.82rem', color: 'var(--slate)', lineHeight: 1.5 }}>
+                {evaluation.unencodedConditions.map((cond, i) => (
+                  <li key={i} style={{ marginBottom: '4px' }}>{cond}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 

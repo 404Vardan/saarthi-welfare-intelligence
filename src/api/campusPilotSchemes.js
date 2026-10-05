@@ -419,7 +419,7 @@ export const campusPilotSchemes = [
       rules: [
         { field: 'citizen.state', op: 'IN', value: ['Telangana', 'telangana'], label: 'Resident of Telangana', impact: 'critical' },
         { field: 'citizen.age', op: 'BETWEEN', value: [18, 59], label: 'Age 18 to 59 Years', impact: 'critical' },
-        { field: 'citizen.land_ownership', op: 'IN', value: ['below_2_acres', '2_to_5_acres', 'above_5_acres'], label: 'Cultivable Land Passbook Holder', impact: 'critical' }
+        { field: 'citizen.land_ownership', op: 'IN', value: ['below_2_acres', '2_to_5_acres', 'above_5_acres', true, 'true'], label: 'Cultivable Land Passbook Holder', impact: 'critical' }
       ]
     },
     rules: { state: 'Telangana', age_min: 18, age_max: 59 },
@@ -821,7 +821,7 @@ export const campusPilotSchemes = [
       label: 'UGC JRF Eligibility Criteria',
       rules: [
         { field: 'citizen.age', op: 'LTE', value: 30, label: 'Age ≤ 30 Years (Relaxation up to 5 years for SC/ST/OBC/Women/PwD)', impact: 'critical' },
-        { field: 'citizen.education', op: 'IN', value: ['post_graduate', 'graduate'], label: 'Master’s Degree with min 55% marks', impact: 'critical' }
+        { field: 'citizen.education', op: 'IN', value: ['post_graduate', 'graduate', 'doctorate', 'phd'], label: 'Master’s Degree with min 55% marks', impact: 'critical' }
       ]
     },
     rules: { age_max: 30, education: ['post_graduate', 'graduate'] },
@@ -861,7 +861,7 @@ export const campusPilotSchemes = [
       label: 'Radhakrishnan PDF Eligibility Criteria',
       rules: [
         { field: 'citizen.age', op: 'LTE', value: 35, label: 'Age ≤ 35 Years (40 for SC/ST/OBC/Women/PwD)', impact: 'critical' },
-        { field: 'citizen.education', op: 'EQ', value: 'post_graduate', label: 'Completed PhD in Humanities / Social Sciences', impact: 'critical' }
+        { field: 'citizen.education', op: 'IN', value: ['post_graduate', 'graduate', 'doctorate', 'phd'], label: 'Completed PhD in Humanities / Social Sciences', impact: 'critical' }
       ]
     },
     rules: { age_max: 35, education: 'post_graduate' },
@@ -982,7 +982,7 @@ export const campusPilotSchemes = [
       label: 'ICMR JRF Eligibility Criteria',
       rules: [
         { field: 'citizen.age', op: 'LTE', value: 28, label: 'Age ≤ 28 Years (33 for SC/ST/Women/PwD)', impact: 'critical' },
-        { field: 'citizen.education', op: 'IN', value: ['post_graduate', 'graduate'], label: 'Master’s in Science / Life Sciences / Medicine', impact: 'critical' }
+        { field: 'citizen.education', op: 'IN', value: ['post_graduate', 'graduate', 'doctorate', 'phd'], label: 'Master’s in Science / Life Sciences / Medicine', impact: 'critical' }
       ]
     },
     rules: { age_max: 28, education: ['post_graduate', 'graduate'] },
@@ -1022,7 +1022,7 @@ export const campusPilotSchemes = [
       label: 'CSIR Nehru PDF Eligibility Criteria',
       rules: [
         { field: 'citizen.age', op: 'LTE', value: 32, label: 'Age ≤ 32 Years (Relaxable up to 5 years for SC/ST/Women/PwD)', impact: 'critical' },
-        { field: 'citizen.education', op: 'EQ', value: 'post_graduate', label: 'PhD Degree in Science or Engineering', impact: 'critical' }
+        { field: 'citizen.education', op: 'IN', value: ['post_graduate', 'graduate', 'doctorate', 'phd'], label: 'PhD Degree in Science or Engineering', impact: 'critical' }
       ]
     },
     rules: { age_max: 32, education: 'post_graduate' },
@@ -1061,7 +1061,7 @@ export const campusPilotSchemes = [
       combinator: 'AND',
       label: 'MANF Eligibility Criteria',
       rules: [
-        { field: 'citizen.education', op: 'IN', value: ['post_graduate', 'graduate'], label: 'Enrolled in full-time MPhil/PhD', impact: 'critical' },
+        { field: 'citizen.education', op: 'IN', value: ['post_graduate', 'graduate', 'doctorate', 'phd'], label: 'Enrolled in full-time MPhil/PhD', impact: 'critical' },
         { field: 'household.income_annual', op: 'LTE', value: 600000, label: 'Family Annual Income ≤ ₹6,00,000', impact: 'critical', tolerance: 50000 }
       ]
     },

@@ -710,6 +710,24 @@ export const EligibilityEngine = {
       ))
     );
 
+    // Calculate Rule Coverage & Evaluation Mode
+    const unencodedConditions = Array.isArray(scheme.unencoded_conditions)
+      ? scheme.unencoded_conditions
+      : (scheme.exclusions || []).slice(0, 3);
+
+    const astRulesCount = flatBreakdown.length;
+    const totalStatutoryConditions = astRulesCount + unencodedConditions.length;
+    const ruleCoveragePercent = scheme.rule_coverage !== undefined
+      ? scheme.rule_coverage
+      : (totalStatutoryConditions > 0 ? Math.round((astRulesCount / totalStatutoryConditions) * 100) : 100);
+
+    let evaluationMode = 'complete_statutory';
+    if (ruleCompleteness === 'INFORMATIONAL_ONLY') {
+      evaluationMode = 'informational_advisory';
+    } else if (unencodedConditions.length > 0) {
+      evaluationMode = 'partial_criteria';
+    }
+
     return {
       decisionId,
       decision_reference_id: decisionId,
@@ -728,6 +746,12 @@ export const EligibilityEngine = {
       isAlreadyReceiving: alreadyReceiving,
       ruleCompleteness,
       rule_completeness: ruleCompleteness,
+      ruleCoveragePercent,
+      rule_coverage: ruleCoveragePercent,
+      evaluationMode,
+      evaluation_mode: evaluationMode,
+      unencodedConditions,
+      unencoded_conditions: unencodedConditions,
       matchPercentage,
       missingDataCount,
       missingFields: flatBreakdown.filter(b => b.isMissingData || b.status === 'insufficient_data').map(b => b.field),
