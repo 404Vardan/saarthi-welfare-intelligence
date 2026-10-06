@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you utilize Saarthi or the NWIS framework in your academic research, policy analysis, or civic-tech evaluation, please cite it as below."
+title: "NWIS: A Knowledge Graph-Based National Welfare Intelligence System for Citizen-Centric Governance and Policy Decision Support"
+abstract: "Saarthi is an open-source civic-tech and welfare intelligence system designed to address statutory fragmentation and deep information asymmetry across Indian welfare programs. The architecture bridges citizen profiles, deterministic 3-valued Kleene logic Abstract Syntax Tree (AST) eligibility engines, status-aware document readiness verification, and administrative policy intelligence."
+authors:
+  - family-names: "Desai"
+    given-names: "Vardan"
+    email: "pinkudesai1301@gmail.com"
+repository-code: "https://github.com/404Vardan/saarthi-welfare-intelligence"
+url: "https://saarthi-welfare-intelligence.vercel.app"
+version: 2.0.0
+date-released: 2026-10-06
+license: MIT
+keywords:
+  - "welfare intelligence"
+  - "govtech"
+  - "civic-tech"
+  - "knowledge graph"
+  - "deterministic rule engine"
+  - "explainable ai"
+  - "digital governance"
+  - "public policy"
+  - "social impact"
+  - "kleene logic"

@@ -1,0 +1,17 @@
+# Saarthi Code Ownership
+# Lines starting with '#' are comments.
+
+# Default ownership for all files in the repository
+* @404Vardan
+
+# Scheme definitions and deterministic rule engine
+/src/engine/ @404Vardan
+/src/api/schemesData.js @404Vardan
+/src/api/extendedSchemes.js @404Vardan
+
+# Security, SQL migrations, and backend policies
+/*.sql @404Vardan
+/supabase/ @404Vardan
+
+# Regression suites and validation scripts
+/scripts/ @404Vardan
