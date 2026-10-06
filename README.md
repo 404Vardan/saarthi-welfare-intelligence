@@ -18,7 +18,6 @@
   <a href="docs/architecture.md"><strong>📚 Documentation</strong></a> •
   <a href="#system-architecture"><strong>🏗️ Architecture</strong></a> •
   <a href="docs/research.md"><strong>🧠 Research</strong></a> •
-  <a href="docs/REVIEW_III_PRESENTATION_DECK.md"><strong>📊 Presentation</strong></a> •
   <a href="https://github.com/404Vardan/saarthi-welfare-intelligence"><strong>💻 GitHub</strong></a>
 </p>
 

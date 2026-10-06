@@ -35,13 +35,13 @@ To test governance capabilities without compromising sensitive citizen census da
 
 ---
 
-## 3. Existing Evaluation & Defense Protocols in Repository
+## 3. System Validation & Verification Documentation
 
-This repository contains supporting research documentation:
+For technical evaluation protocols and system specifications, refer to:
 
-- [User Evaluation Protocol](file:///c:/Users/pinku/OneDrive/Documents/CSP-1/docs/USER_EVALUATION_PROTOCOL.md): Field evaluation protocol measuring task completion rate, decision trust, and document clarity across 5 statutory personas.
-- [Review Presentation Deck](file:///c:/Users/pinku/OneDrive/Documents/CSP-1/docs/REVIEW_III_PRESENTATION_DECK.md): Formal research slide deck detailing technical motivation, architecture, and empirical findings.
-- [Viva Defense Cheatsheet](file:///c:/Users/pinku/OneDrive/Documents/CSP-1/docs/VIVA_DEFENSE_CHEATSHEET.md): Technical defense notes on Kleene logic proofs, RLS security guarantees, and AST evaluation mechanics.
+- [System Architecture](architecture.md): Formal breakdown of AST execution pipelines, Supabase RLS policies, and distributed caching topologies.
+- [Testing & Quality Assurance](testing.md): Automated verification suite covering Kleene ternary logic, deterministic AST evaluation, and state isolation.
+- [Trust Model & Safety](trust-model.md): Detailed verification proofs of non-hallucinatory rule execution and differential privacy guarantees.
 
 ---
 
