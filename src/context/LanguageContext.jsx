@@ -144,6 +144,7 @@ export const translations = {
     catHousing: '🏠 आवास एवं स्वच्छता',
     catCredit: '💳 ऋण व वित्तीय समावेशन',
     catWomenChild: '👩 महिला एवं बाल विकास',
+    catCampusPilot: '🎓 परिसर कल्याण पायलट',
 
     eligible: 'पात्र',
     nearlyEligible: 'निकटतम पात्रता',
@@ -218,6 +219,7 @@ export const translations = {
     catHousing: '🏠 આવાસ અને સ્વચ્છતા',
     catCredit: '💳 ધિરાણ અને સહાય',
     catWomenChild: '👩 મહિલા અને બાળ કલ્યાણ',
+    catCampusPilot: '🎓 કેમ્પસ કલ્યાણ પાયલટ',
 
     eligible: 'લાયક',
     nearlyEligible: 'નજીવી અપૂર્ણતા',
@@ -292,6 +294,7 @@ export const translations = {
     catHousing: '🏠 गृहनिर्माण व स्वच्छता',
     catCredit: '💳 कर्ज व आर्थिक समावेशन',
     catWomenChild: '👩 महिला व बाल विकास',
+    catCampusPilot: '🎓 कॅम्पस कल्याण पायलट',
 
     eligible: 'पात्र',
     nearlyEligible: 'जवळपास पात्र',
@@ -366,6 +369,7 @@ export const translations = {
     catHousing: '🏠 আবাসন ও স্যানিটেশন',
     catCredit: '💳 ঋণ ও আর্থিক অন্তর্ভুক্তি',
     catWomenChild: '👩 নারী ও শিশু কল্যাণ',
+    catCampusPilot: '🎓 ক্যাম্পাস কল্যাণ পাইলট',
 
     eligible: 'যোগ্য',
     nearlyEligible: 'প্রায় যোগ্য',
@@ -440,6 +444,7 @@ export const translations = {
     catHousing: '🏠 గృహనిర్మాణం & పారిశుధ్యం',
     catCredit: '💳 రుణాలు & ఆర్థిక చేరిక',
     catWomenChild: '👩 మహిళా & శిశు సంక్షేమం',
+    catCampusPilot: '🎓 క్యాంపస్ సంక్షేమ పైలట్',
 
     eligible: 'అర్హులు',
     nearlyEligible: 'దాదాపు అర్హులు',
@@ -514,6 +519,7 @@ export const translations = {
     catHousing: '🏠 வீட்டுவசதி & சுகாதாரம்',
     catCredit: '💳 கடன் & நிதி உள்ளடக்கம்',
     catWomenChild: '👩 பெண்கள் மற்றும் குழந்தைகள் நலம்',
+    catCampusPilot: '🎓 வளாக நல முன்னோடி',
 
     eligible: 'தகுதியானது',
     nearlyEligible: 'கிட்டத்தட்ட தகுதியானது',
@@ -588,6 +594,7 @@ export const translations = {
     catHousing: '🏠 ವಸತಿ ಮತ್ತು ನೈರ್ಮಲ್ಯ',
     catCredit: '💳 ಸಾಲ ಮತ್ತು ಆರ್ಥಿಕ ಸೇರ್ಪಡೆ',
     catWomenChild: '👩 ಮಹಿಳಾ ಮತ್ತು ಮಕ್ಕಳ ಕಲ್ಯಾಣ',
+    catCampusPilot: '🎓 ಕ್ಯಾಂಪಸ್ ಕಲ್ಯಾಣ ಪೈಲಟ್',
 
     eligible: 'ಅರ್ಹರು',
     nearlyEligible: 'ಬಹುತೇಕ ಅರ್ಹರು',
@@ -662,6 +669,7 @@ export const translations = {
     catHousing: '🏠 ഭവനനിർമ്മാണവും ശുചിത്വവും',
     catCredit: '💳 വായ്പയും ധനകാര്യവും',
     catWomenChild: '👩 വനിതാ-ശിശു ക്ഷേമം',
+    catCampusPilot: '🎓 കാമ്പസ് ക്ഷേമ പൈലറ്റ്',
 
     eligible: 'അർഹതയുണ്ട്',
     nearlyEligible: 'ഏറെക്കുറെ അർഹതയുണ്ട്',
@@ -736,6 +744,7 @@ export const translations = {
     catHousing: '🏠 ਰਿਹਾਇਸ਼ ਤੇ ਸਵੱਛਤਾ',
     catCredit: '💳 ਕਰਜ਼ਾ ਤੇ ਵਿੱਤੀ ਸਹਾਇਤਾ',
     catWomenChild: '👩 ਮਹਿਲਾ ਤੇ ਬਾਲ ਵਿਕਾਸ',
+    catCampusPilot: '🎓 ਕੈਂਪਸ ਭਲਾਈ ਪਾਇਲਟ',
 
     eligible: 'ਯੋਗ',
     nearlyEligible: 'ਲਗਭਗ ਯੋਗ',
@@ -810,6 +819,7 @@ export const translations = {
     catHousing: '🏠 ଆବାସ ଓ ପରିମଳ',
     catCredit: '💳 ଋଣ ଓ ଆର୍ଥିକ ଅନ୍ତର୍ଭୁକ୍ତିକରଣ',
     catWomenChild: '👩 ମହିଳା ଓ ଶିଶୁ କଲ୍ୟାଣ',
+    catCampusPilot: '🎓 କ୍ୟାମ୍ପସ କଲ୍ୟାଣ ପାଇଲଟ',
 
     eligible: 'ଯୋଗ୍ୟ',
     nearlyEligible: 'ପାଖାପାଖି ଯୋଗ୍ୟ',
@@ -852,6 +862,7 @@ export function LanguageProvider({ children }) {
   }, [currentLang]);
 
   const t = (key) => {
+    if (!key) return '';
     return translations[currentLang]?.[key] || 
            passportTranslations[currentLang]?.[key] || 
            translations['en']?.[key] || 
@@ -860,7 +871,7 @@ export function LanguageProvider({ children }) {
   };
 
   const changeLanguage = (code) => {
-    if (translations[code] || passportTranslations[code]) {
+    if (code && (translations[code] || passportTranslations[code])) {
       setCurrentLang(code);
     }
   };
@@ -878,7 +889,7 @@ export function useLanguage() {
     return {
       currentLang: 'en',
       setLanguage: () => {},
-      t: (key) => translations.en[key] || passportTranslations.en[key] || key,
+      t: (key) => (key ? (translations?.en?.[key] || passportTranslations?.en?.[key] || key) : ''),
       supportedLanguages
     };
   }

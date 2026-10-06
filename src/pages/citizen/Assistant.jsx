@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { GeminiAPI } from '../../api/geminiApi';
 import { Send, Bot, Sparkles, User, HelpCircle, ShieldAlert, Languages, MessageSquare } from 'lucide-react';
 import FeedbackWidget from '../../components/common/FeedbackWidget';
 
 export default function CitizenAssistant() {
   const { profile, evaluations, documents } = useAuth();
+  const { currentLang, setLanguage, supportedLanguages, t } = useLanguage();
 
   const eligibleSchemes = evaluations.filter(e => e.status === 'eligible');
   const missingDocs = documents.filter(d => d.status === 'pending');
@@ -19,7 +21,6 @@ export default function CitizenAssistant() {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState('English');
 
   const promptChips = [
     { label: 'Why am I eligible for PM-KISAN?', query: 'Why am I eligible for PM-KISAN based on my profile?' },
@@ -37,7 +38,7 @@ export default function CitizenAssistant() {
     setInput('');
     setLoading(true);
 
-    const reply = await GeminiAPI.generateWelfareGuidance(textToSend, profile, eligibleSchemes, missingDocs);
+    const reply = await GeminiAPI.generateWelfareGuidance(textToSend, profile, eligibleSchemes, missingDocs, currentLang);
     const aiMsgId = 'msg-ai-' + Date.now();
     setLoading(false);
     setMessages(prev => [...prev, { id: aiMsgId, sender: 'ai', text: reply }]);
@@ -52,7 +53,7 @@ export default function CitizenAssistant() {
     <div>
       <header className="page-header" style={{ marginBottom: '1.25rem' }}>
         <div>
-          <h1 className="page-title">Ask Saarthi Assistant</h1>
+          <h1 className="page-title">{t('askSaarthi') || 'Ask Saarthi Assistant'}</h1>
           <p className="page-description">
             Grounded AI welfare guidance. Eligibility decisions are strictly verified by our deterministic rule engine.
           </p>
@@ -61,13 +62,16 @@ export default function CitizenAssistant() {
           <Languages size={16} color="var(--slate)" />
           <select
             className="form-select"
-            style={{ width: 'auto', padding: '4px 10px', fontSize: '0.8rem' }}
-            value={selectedLanguage}
-            onChange={e => setSelectedLanguage(e.target.value)}
+            style={{ width: 'auto', padding: '4px 10px', fontSize: '0.8rem', cursor: 'pointer' }}
+            value={currentLang}
+            onChange={e => setLanguage(e.target.value)}
+            aria-label="Select Assistant Language"
           >
-            <option value="English">English</option>
-            <option value="Hindi">हिंदी (Hindi)</option>
-            <option value="Gujarati">ગુજરાતી (Gujarati)</option>
+            {supportedLanguages.map(l => (
+              <option key={l.code} value={l.code}>
+                {l.native} ({l.label})
+              </option>
+            ))}
           </select>
         </div>
       </header>

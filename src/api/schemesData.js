@@ -14,8 +14,8 @@ function createScheme(data) {
     scheme_code: data.scheme_code,
     official_name: data.official_name || data.name,
     name: data.official_name || data.name,
-    short_name: data.short_name || data.scheme_code,
-    slug: data.slug || data.scheme_code.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+    short_name: data.short_name || data.scheme_code || data.name || 'Scheme',
+    slug: data.slug || (data.scheme_code ? data.scheme_code.toLowerCase().replace(/[^a-z0-9]+/g, '-') : (data.id ? String(data.id).toLowerCase() : 'scheme')),
     ministry: data.ministry || 'Government of India',
     department: data.department || 'Nodal Department',
     government_level: data.government_level || data.gov_level || 'central',
@@ -36,7 +36,7 @@ function createScheme(data) {
     processing_days: data.processing_days || data.days || 21,
     ast_rules: data.ast_rules || {
       combinator: 'AND',
-      label: `${data.scheme_code} Eligibility Criteria`,
+      label: `${data.scheme_code || data.name || 'Scheme'} Eligibility Criteria`,
       rules: []
     },
     rules: data.rules || {},
